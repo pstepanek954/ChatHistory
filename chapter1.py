@@ -1,6 +1,7 @@
 import streamlit as slt
 import datetime
-from PIL import Image
+from PIL import Image 
+
 
 @slt.cache
 def show_100():
