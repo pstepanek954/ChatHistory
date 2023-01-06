@@ -1,6 +1,5 @@
 import streamlit as slt
 import datetime
-from PIL import Image 
 
 
 @slt.cache
@@ -25,9 +24,9 @@ def run():
     slt.write("Write here.")
 
     
-    img = Image.open("picx1.png")
+    # img = Image.open("picx1.png")
 
-    slt.image(img, width= 300, caption="picx1")
+    # slt.image(img, width= 300, caption="picx1")
 
     if slt.checkbox("Hide/Show"):
         slt.text("Clicked")
