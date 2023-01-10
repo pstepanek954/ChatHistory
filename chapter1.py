@@ -2,7 +2,10 @@ import streamlit as slt
 import datetime
 import json
 import time
+import pandas as pd
+import numpy as np
 import pytz
+from collections import defaultdict
 
 
 slt.set_page_config(
@@ -22,15 +25,60 @@ if slt.session_state.first_visit:
 @slt.experimental_memo
 def load_data(address):
     temp = ""
+    max_msg_vol = 0
     with open(address, "r", encoding = "utf8")  as f:
         temp = json.load(f)
-    return temp
 
+    messenger = defaultdict(def_value) # 消息总数
+    types = defaultdict(def_value_list) # 消息的种类：按照分类进行排布
     
+    left = temp[0]["CreateTime"]
+    right = temp[-1]["CreateTime"]
+
+    for i in temp:
+        messenger[i["Des"]] += 1
+        types[i["Type"]][i["Des"]] += 1
+    return temp, messenger, left, right, types
+
+
+def def_value():
+    return 0
+def def_value_list():
+    return [0, 0]
+
+
 ADDRESS = "./chathistory.json"
-CHAT_HISTORY = load_data(ADDRESS)
-START_TIMESTAMP = CHAT_HISTORY[0]['CreateTime']
-END_TIMESTAMP = CHAT_HISTORY[-1]['CreateTime']
+CHAT_HISTORY, TOTAL_CNT, START_TIMESTAMP, END_TIMESTAMP, TYPES_CNT = load_data(ADDRESS)
+
+
+
+def TYPES_CNT_process():
+
+    # | :-------------: | :----------: | ------------: |
+    # | hhhhh |   centered   | right-aligned |
+    # |      |    中对齐     |         右对齐 | """)
+    # 10002 ： 撤回消息
+    # 1: 普通消息
+    # 47: 表情包
+    # 3: 图片
+    # 49：回复某些msg/分享的外链接等
+    # 50: vx通话情况
+    # 43: 视频消息
+    # 10000: 红包/拍一拍/撤回等系统消息
+    # 48：定位分享
+    # 34：语音
+    # 42：
+    msg_idx = [1, 47, 49, 3, 34, 10002, 43, 10000, 50, 48, 42 ]
+    msg_del = [TYPES_CNT[i][0] for i in msg_idx]
+    msg_rec = [TYPES_CNT[i][1] for i in msg_idx]
+    TYPES_CNT_dataframe = pd.DataFrame({ "消息类型":["文字消息", "表情包", "消息引用｜外链分享", "图片消息", "语音消息", \
+        "消息撤回", "视频消息", "红包/拍一拍等系统消息", "VX通话", "定位分享", "联系人推荐"], "瑜瑜子的": np.array(msg_rec),\
+             "笑笑子的": np.array(msg_del), "总计": np.array(msg_del) + np.array(msg_rec) })
+    return TYPES_CNT_dataframe
+    
+#  = basic_count(CHAT_HISTORY)
+# START_TIMESTAMP = CHAT_HISTORY[0]['CreateTime']
+# END_TIMESTAMP = CHAT_HISTORY[-1]['CreateTime']
 TOTAL_MSG = len(CHAT_HISTORY)
 
 slt.markdown("# 奇奇怪怪的聊天站")
@@ -104,11 +152,41 @@ def show_profile():
 show_profile()
 
 d = slt.date_input(
-    "Choose Start Day",
+    "Choose Start Day :kiss:",
     datetime.date(2022, 2, 3))
 slt.write('你选择的日期 📅 是:', d)
 slt.write("Msg volume for the selected day " , d, " is ", get_msg_vol(get_local_timestamp(str(d) + " 00:00:00"), \
      get_local_timestamp(str(d) + " 23:59:59")))
+
+# slt.write(TOTAL_CNT[0])
+
+df = pd.DataFrame(
+   np.random.randn(10, 5),
+   columns=('col %d' % i for i in range(5)))
+
+
+TYPES_CNT_dataframe = TYPES_CNT_process()
+slt.table(TYPES_CNT_dataframe)
+slt.write([[i, TYPES_CNT[i][0], TYPES_CNT[i][1]] for i in TYPES_CNT])
+
+# slt.markdown("""| 信息格式  | `笑笑`发的！ |  `瑜瑜`发的！ | 
+# | :-------------: | :----------: | ------------: |
+# | hhhhh |   centered   | right-aligned |
+# |      |    中对齐     |         右对齐 | """)
+# 10002 ： 撤回消息
+# 1: 普通消息
+# 47: 表情包
+# 3: 图片
+# 49：回复某些msg/分享的外链接等
+# 50: vx通话情况
+# 43: 视频消息
+# 10000: 红包/拍一拍/撤回等系统消息
+# 48：定位分享
+# 34：语音
+# 42：
+
+
+
 # slt.write("Time stamp is ", str(get_local_timestamp( "2022-10-04 10:57:22")))
 # print(d)
 # ============================== ============================== 
