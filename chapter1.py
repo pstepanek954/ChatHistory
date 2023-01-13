@@ -221,6 +221,7 @@ def get_local_time(timeStamp):
     """
     time_zone = pytz.timezone('Asia/Shanghai')
     t  = datetime.datetime.fromtimestamp(timeStamp)
+    slt.write(t)
     timeArray = time_zone.localize(t)
     otherStyleTime = time.strftime("%Y-%m-%d %H:%M:%S", timeArray.timetuple())
     return otherStyleTime
