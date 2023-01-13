@@ -22,7 +22,7 @@ slt.set_page_config(
 
 
 
-slt.sidebar.header("About")
+slt.sidebar.header("About One")
 
 
 
