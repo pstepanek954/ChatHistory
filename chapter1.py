@@ -16,11 +16,7 @@ slt.set_page_config(
     page_icon="🦈",  
     layout="wide",
     initial_sidebar_state="expanded",
-    menu_items={
-        'Get Help': 'https://www.extremelycoolapp.com/help',
-        'Report a bug': "https://www.extremelycoolapp.com/bug",
-        'About': "# This is a header. This is an *extremely* cool app!"
-    }      
+      
     
 )
 
@@ -51,6 +47,7 @@ def get_local_time_ymd(timeStamp):
     Returns:
         _type_: _description_
     """
+    time_zone = pytz.timezone('Asia/Shanghai')
     timeArray = time.localtime(timeStamp)
     otherStyleTime = time.strftime("%Y-%m-%d", timeArray )
     return otherStyleTime
@@ -66,6 +63,10 @@ def get_local_timestamp(date_time):
     Returns:
         _type_: _description_
     """
+    # time_zone = pytz.timezone('Asia/Shanghai')
+    # timeArray = datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
+    # local_dt = timeArray.astimezone(time_zone)
+    # return int(time.mktime(local_dt.timetuple()))
     time_zone = pytz.timezone('Asia/Shanghai')
     timeArray = datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
     local_dt = timeArray.astimezone(time_zone)
@@ -88,7 +89,7 @@ def load_data(address):
     left = temp[0]["CreateTime"] # 开始时间（精确到秒）
     right = temp[-1]["CreateTime"] # 结束时间(精确到秒)
 
-    left_day_ymd = get_local_time_ymd(left) # 获取第一天的 "%y-%m-%d" string
+    left_day_ymd = get_local_time_ymd(left) # 获取第一天的 "%y-%m-%d" string，结果是YYYY-MM-DD
     right_day_ymd = get_local_time_ymd(right) # 获取最后一天的 "%y-%m-%d" string
 
     every_day = list(pd.date_range(left_day_ymd, right_day_ymd, freq = "D")) # 每一天的string格式 "%y-%m-%d"
@@ -218,16 +219,36 @@ def get_local_time(timeStamp):
     Returns:
         _type_: _description_
     """
-    timeArray = time.localtime(timeStamp)
-    otherStyleTime = time.strftime("%Y-%m-%d %H:%M:%S", timeArray)
+    time_zone = pytz.timezone('Asia/Shanghai')
+    t  = datetime.datetime.fromtimestamp(timeStamp)
+    timeArray = time_zone.localize(t)
+    otherStyleTime = time.strftime("%Y-%m-%d %H:%M:%S", timeArray.timetuple())
     return otherStyleTime
+
+
+# def get_local_timestamp(date_time):
+#     """ 返回本地时间的时间戳格式
+
+#     Args:
+#         date_time (_type_): _description_
+
+#     Returns:
+#         _type_: _description_
+#     """
+#     time_zone = pytz.timezone('Asia/Shanghai')
+#     timeArray = datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
+#     local_dt = timeArray.astimezone(time_zone)
+#     return int(time.mktime(local_dt.timetuple()))
+
 
 def show_profile():
     slt.write("总共有", str(TOTAL_MSG) ,"条消息, 最早的消息来自瑜瑜子，发送时间是", \
         get_local_time(START_TIMESTAMP), "而最晚的消息是笑笑在", get_local_time(END_TIMESTAMP) , \
             "发送的。", "在这", str(get_interval_time(START_TIMESTAMP, END_TIMESTAMP)), "天中，我们畅所欲言，无话不谈。"  )
     slt.write("记录显示，在", MAX_MSG_DATE, "这一天，我们是两只大话痨，一共发送了", MAX_MSG_VOL, "条消息，是有史以来最多的一天，\
-        这意味着那24个小时里，我们每隔1分钟就会发送消息。" )
+        这意味着那24个小时里，我们每隔1分钟就发1条消息，整天不休。" )
+    slt.write("2022-08-02 这个日子也比较独特。那天除了一个美国女人窜访东南某岛外，瑜瑜和笑笑\
+        怒刷了1428条微信记录，是在讨论一些话题呢，还是在享受暑假的美好呢？")
 
 show_profile()
 
@@ -260,6 +281,9 @@ show_types_cnt()
 
 
 def show_marco_line_graph():
+    """
+        绘制宏观的聊天记录数量折线图
+    """
     input_data = [[0 for _ in range(len(EVERY_DAY))] for _ in range(3)]
     for day, i in enumerate(EVERY_DAY):
         cur_dict = EVERY_DAY_DETAIL[i]
@@ -269,7 +293,9 @@ def show_marco_line_graph():
         input_data[2][day] = input_data[0][day] + input_data[1][day]
 
     c = (
-        Line()
+        Line(init_opts=opts.InitOpts(animation_opts=opts.AnimationOpts(
+                animation_duration=2000, animation_easing="elasticOut"
+            )))
         .add_xaxis(EVERY_DAY)
         .add_yaxis("天瑜的!",
                 input_data[1], 
@@ -308,8 +334,13 @@ def show_marco_line_graph():
             title_opts=opts.TitleOpts(title="对话数量",subtitle="WeChat骚话大赏!",
                                     pos_left=50, pos_top=10),
             xaxis_opts=opts.AxisOpts(type_="category", boundary_gap=False),
-            legend_opts = opts.LegendOpts( selected_mode="multiple",pos_left=100,pos_top=80)
+            legend_opts = opts.LegendOpts( selected_mode="multiple",pos_left=100,pos_top=80),
+            
+
+            # = opts.AnimationOpts(animation_duration = 2000)
+
         )
+        
         
     )
     st_pyecharts(c, height="650px")
