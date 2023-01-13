@@ -41,8 +41,8 @@ def get_local_time_ymd(timeStamp):
         _type_: _description_
     """
     
-    timeArray = time.localtime(timeStamp)
-    otherStyleTime = time.strftime("%Y-%m-%d", timeArray )
+    t = datetime.datetime.fromtimestamp(timeStamp)
+    otherStyleTime = time.strftime("%Y-%m-%d", t.timetuple() )
     return otherStyleTime
 
 
