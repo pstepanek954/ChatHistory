@@ -1,2 +1,6 @@
+numpy==1.22.4
+pandas==1.5.1
+pyecharts==1.9.1
 pytz==2022.1
 streamlit==1.16.0
+streamlit_echarts==0.4.0

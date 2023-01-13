@@ -1,7 +1,16 @@
 import pandas as pd
 import numpy as np
 
+class Person:
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+    
+    def __str__(self):
+        fmt = "The a is {} , b is {}"
+        return fmt.format(self.a , self.b)
 
-tmp = {1: [1,2], 5:[3,4]}
-t = pd.DataFrame({"A":[1,2,3,4], "B" : np.array([1,2,3,4]), "C" : np.array([1,2,3,4]) + np.array([1,2,3,4])})
-print(t)
+
+a = Person("Nan", "Naaaa")
+
+print(a)
