@@ -16,17 +16,9 @@ slt.set_page_config(
     page_title="奇奇怪怪的发电中心站",   
     page_icon="🦈",  
     layout="wide",
-    initial_sidebar_state="expanded",
-      
-    
+    initial_sidebar_state="expanded",  
 )
-
-
-
 slt.sidebar.header("About One")
-
-
-
 
 
 if 'first_visit' not in slt.session_state:
@@ -68,10 +60,10 @@ def get_local_timestamp(date_time):
     # timeArray = datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
     # local_dt = timeArray.astimezone(time_zone)
     # return int(time.mktime(local_dt.timetuple()))
-    time_zone = pytz.timezone('Asia/Shanghai')
+    # time_zone = pytz.timezone('Asia/Shanghai')
     timeArray = datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
-    local_dt = timeArray.astimezone(time_zone)
-    return int(time.mktime(local_dt.timetuple()))
+    # local_dt = timeArray.astimezone(time_zone)
+    return int(time.mktime(timeArray.timetuple()))
 
 
 @slt.experimental_memo # experimental_memo 这个处理缓存效果比cache要好得多
