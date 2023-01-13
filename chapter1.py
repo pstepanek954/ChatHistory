@@ -56,13 +56,9 @@ def get_local_timestamp(date_time):
     Returns:
         _type_: _description_
     """
-    # time_zone = pytz.timezone('Asia/Shanghai')
-    # timeArray = datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
-    # local_dt = timeArray.astimezone(time_zone)
-    # return int(time.mktime(local_dt.timetuple()))
-    # time_zone = pytz.timezone('Asia/Shanghai')
+    
     timeArray = datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
-    # local_dt = timeArray.astimezone(time_zone)
+    
     return int(time.mktime(timeArray.timetuple()))
 
 
@@ -82,8 +78,8 @@ def load_data(address):
     left = temp[0]["CreateTime"] # 开始时间（精确到秒）
     right = temp[-1]["CreateTime"] # 结束时间(精确到秒)
 
-    left_day_ymd = get_local_time_ymd(left) # 获取第一天的 "%y-%m-%d" string，结果是YYYY-MM-DD
-    right_day_ymd = get_local_time_ymd(right) # 获取最后一天的 "%y-%m-%d" string
+    left_day_ymd = get_local_time_ymd(left)[:10] # 获取第一天的 "%y-%m-%d" string，结果是YYYY-MM-DD
+    right_day_ymd = get_local_time_ymd(right)[:10] # 获取最后一天的 "%y-%m-%d" string
 
     every_day = list(pd.date_range(left_day_ymd, right_day_ymd, freq = "D")) # 每一天的string格式 "%y-%m-%d"
 
