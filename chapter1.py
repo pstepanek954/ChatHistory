@@ -9,7 +9,8 @@ from collections import defaultdict
 import pyecharts.options as opts
 from pyecharts.charts import Line
 from streamlit_echarts import st_pyecharts
-
+import os
+os.environ['TZ'] = 'Asia/Shanghai'
 
 slt.set_page_config(
     page_title="奇奇怪怪的发电中心站",   
@@ -47,7 +48,7 @@ def get_local_time_ymd(timeStamp):
     Returns:
         _type_: _description_
     """
-    time_zone = pytz.timezone('Asia/Shanghai')
+    
     timeArray = time.localtime(timeStamp)
     otherStyleTime = time.strftime("%Y-%m-%d", timeArray )
     return otherStyleTime
@@ -219,11 +220,9 @@ def get_local_time(timeStamp):
     Returns:
         _type_: _description_
     """
-    time_zone = pytz.timezone('Asia/Shanghai')
+    
     t  = datetime.datetime.fromtimestamp(timeStamp)
-    slt.write(t)
-    timeArray = time_zone.localize(t)
-    otherStyleTime = time.strftime("%Y-%m-%d %H:%M:%S", timeArray.timetuple())
+    otherStyleTime = time.strftime("%Y-%m-%d %H:%M:%S", t.timetuple())
     return otherStyleTime
 
 
