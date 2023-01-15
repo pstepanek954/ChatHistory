@@ -1,14 +1,29 @@
-import pandas as pd
-import numpy as np
-import pytz
-import datetime
-time_zone = pytz.timezone('Asia/Shanghai')
+import random
 
-# now = datetime.datetime.now(time_zone).strftime("%Y-%m-%d %H:%M:%S")
-t  = datetime.datetime.fromtimestamp(1633700753)
-print(t)
-dt3 = time_zone.localize(t)
-# print(dt3)
-# mtime=time.mktime(time.strptime(now,'%Y-%m-%d %H:%M:%S'))+int(2)*60
+from pyecharts import options as opts
+from pyecharts.charts import HeatMap
+from pyecharts.faker import Faker
 
-# print("2022-02-02 11:23:22".strftime())
+value = [[i, j, random.randint(0, 50)] for i in range(24) for j in range(7)]
+c = (
+    HeatMap()
+    .add_xaxis(Faker.clock)
+    .add_yaxis(
+        "series0",
+        Faker.week,
+        value,
+        label_opts=opts.LabelOpts(is_show=True, position="inside"),
+    )
+    .set_global_opts(
+        title_opts=opts.TitleOpts(title="HeatMap-Label 显示"),
+        visualmap_opts=opts.VisualMapOpts(),
+    )
+    # .render("heatmap_with_label_show.html")
+)
+
+print(value)
+# import datetime
+
+# t = datetime.datetime.fromtimestamp(1661788005)
+# print(t.hour)
+# t.isoweekday

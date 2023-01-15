@@ -7,7 +7,7 @@ import numpy as np
 import pytz
 from collections import defaultdict
 import pyecharts.options as opts
-from pyecharts.charts import Line
+from pyecharts.charts import Line, HeatMap
 from streamlit_echarts import st_pyecharts
 import os
 os.environ['TZ'] = 'Asia/Shanghai'
@@ -56,9 +56,7 @@ def get_local_timestamp(date_time):
     Returns:
         _type_: _description_
     """
-    
     timeArray = datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
-    
     return int(time.mktime(timeArray.timetuple()))
 
 
@@ -94,6 +92,12 @@ def load_data(address):
     tail = defaultdict(def_value_list)
     start_idx = 0
     tmp_idx = 0
+
+    week_day_cnt = [[i, j , 0] for i in range(24) for j in range(7) ] # 统计消息的数量
+
+
+    emoji_packs = []
+
     for idx, i in enumerate(temp): # 统计消息数量
         messenger[i["Des"]] += 1
         types[i["Type"]][i["Des"]] += 1
@@ -112,10 +116,21 @@ def load_data(address):
                 max_msg_vol = len(temp) - idx
                 max_msg_date = every_day[-1]
             tail[i["Type"]][i["Des"]] += 1
-            
+
+        if i["Type"] == 47:
+            emoji_packs.append(i)
+        
+        tmp_wk_detail = datetime.datetime.fromtimestamp(i["CreateTime"])
+        wk_day = tmp_wk_detail.weekday()
+        wk_hour = int(tmp_wk_detail.hour)
+        week_day_cnt[wk_hour * 7 + wk_day][2] += 1
+
+
+
     every_day_detail[every_day[-1]] = tail
 
-    return temp, messenger, left, right, types, every_day, every_day_timestamp, every_day_detail, max_msg_date, max_msg_vol
+    return temp, messenger, left, right, types, every_day, every_day_timestamp, \
+        every_day_detail, max_msg_date, max_msg_vol, week_day_cnt, emoji_packs
 
 
 
@@ -127,7 +142,7 @@ def def_value_list():
 
 ADDRESS = "./chathistory.json"
 CHAT_HISTORY, TOTAL_CNT, START_TIMESTAMP, END_TIMESTAMP, TYPES_CNT, EVERY_DAY, \
-    EVERY_DAY_TIMESTAMP, EVERY_DAY_DETAIL, MAX_MSG_DATE , MAX_MSG_VOL = load_data(ADDRESS)
+    EVERY_DAY_TIMESTAMP, EVERY_DAY_DETAIL, MAX_MSG_DATE , MAX_MSG_VOL, WEEK_DAY_CNT, EMOJI_PACKS = load_data(ADDRESS)
 
 
 def TYPES_CNT_process():
@@ -165,7 +180,10 @@ slt.markdown("# 奇奇怪怪的聊天站")
 slt.caption("🧐 什么聊天站！进来看看！")
 
 
-slt.json(CHAT_HISTORY[-1])
+if slt.button("点点看！😘"):
+    slt.json(CHAT_HISTORY[-1])
+else:
+    pass
 
 # ============================ ==================================
 
@@ -213,30 +231,14 @@ def get_local_time(timeStamp):
     otherStyleTime = time.strftime("%Y-%m-%d %H:%M:%S", t.timetuple())
     return otherStyleTime
 
-
-# def get_local_timestamp(date_time):
-#     """ 返回本地时间的时间戳格式
-
-#     Args:
-#         date_time (_type_): _description_
-
-#     Returns:
-#         _type_: _description_
-#     """
-#     time_zone = pytz.timezone('Asia/Shanghai')
-#     timeArray = datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
-#     local_dt = timeArray.astimezone(time_zone)
-#     return int(time.mktime(local_dt.timetuple()))
-
-
 def show_profile():
     slt.write("总共有", str(TOTAL_MSG) ,"条消息, 最早的消息来自瑜瑜子，发送时间是", \
         get_local_time(START_TIMESTAMP), "而最晚的消息是笑笑在", get_local_time(END_TIMESTAMP) , \
             "发送的。", "在这", str(get_interval_time(START_TIMESTAMP, END_TIMESTAMP)), "天中，我们畅所欲言，无话不谈。"  )
     slt.write("记录显示，在", MAX_MSG_DATE, "这一天，我们是两只大话痨，一共发送了", MAX_MSG_VOL, "条消息，是有史以来最多的一天，\
         这意味着那24个小时里，我们每隔1分钟就发1条消息，整天不休。" )
-    slt.write("2022-08-02 这个日子也比较独特。那天除了一个美国女人窜访东南某岛外，瑜瑜和笑笑\
-        怒刷了1428条微信记录，是在讨论一些话题呢，还是在享受暑假的美好呢？")
+    slt.write("2022-08-02 这个日子也比较独特。瑜瑜和笑笑\
+        怒刷了1428条微信记录，其中瑜瑜说了628句。炎炎夏日挡不住恋人的絮絮叨叨💑。")
 
 show_profile()
 
@@ -247,6 +249,7 @@ slt.sidebar.write('你选择的日期 📅 是:', d)
 slt.sidebar.write("Msg volume for the selected day " , d, " is ", get_msg_vol(get_local_timestamp(str(d) + " 00:00:00"), \
      get_local_timestamp(str(d) + " 23:59:59")))
 slt.sidebar.markdown("------")
+slt.sidebar.write()
 # slt.write(EVERY_DAY_DETAIL[str(d)])
 
 
@@ -267,18 +270,18 @@ def show_types_cnt():
 
 show_types_cnt()
 
-
 def show_marco_line_graph():
     """
         绘制宏观的聊天记录数量折线图
     """
-    input_data = [[0 for _ in range(len(EVERY_DAY))] for _ in range(3)]
+    input_data = [[0 for _ in range(len(EVERY_DAY))] for _ in range(4)]
     for day, i in enumerate(EVERY_DAY):
         cur_dict = EVERY_DAY_DETAIL[i]
         for j in cur_dict:
             input_data[0][day] += cur_dict[j][0]
             input_data[1][day] += cur_dict[j][1]
         input_data[2][day] = input_data[0][day] + input_data[1][day]
+        input_data[3][day] = input_data[1][day] - input_data[0][day]
 
     c = (
         Line(init_opts=opts.InitOpts(animation_opts=opts.AnimationOpts(
@@ -290,7 +293,8 @@ def show_marco_line_graph():
                 is_smooth=True, 
                 symbol = None,
                 markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="max")]),
-                markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")]),
+                markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")],  \
+                    label_opts=opts.LabelOpts(is_show=False)),
                 areastyle_opts=opts.AreaStyleOpts(opacity=0.2, color="rgba(245,212,217,0.15)"),
                 )
         .add_yaxis("笑笑的!", 
@@ -298,24 +302,23 @@ def show_marco_line_graph():
                 is_smooth=True, 
                 symbol = None,
                 markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="max")]),
-                markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")]))
+                markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")],  \
+                    label_opts=opts.LabelOpts(is_show=False)))
         .add_yaxis("一起的!", 
                 input_data[2],
                 is_smooth=True,
                 markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="max")] ),
-                markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")]))
+                markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")],  \
+                    label_opts=opts.LabelOpts(is_show=False)))
+                
+        .add_yaxis("差!", 
+                input_data[3],
+                is_smooth=True,
+                markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="max")] ),
+                markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")],  \
+                    label_opts=opts.LabelOpts(is_show=False)))
         .set_series_opts(
             label_opts=opts.LabelOpts(is_show=False),
-            # markarea_opts=opts.MarkAreaOpts(
-            #     data=[
-            #         opts.MarkAreaItem(name="上学期！", x=("2021-10-08", "2022-01-13")
-            #                         ,itemstyle_opts = opts.ItemStyleOpts(color = 'rgba(245,212,217,0.15)')),
-            #         opts.MarkAreaItem(name="这里是寒假！", x=("2022-01-13", "2022-02-12")
-            #                         ,itemstyle_opts = opts.ItemStyleOpts(color = 'rgba(249,204,226,0.15)')),
-            #         opts.MarkAreaItem(name="下学期！", x=("2022-02-12", "2022-03-18")
-            #                         ,itemstyle_opts = opts.ItemStyleOpts(color = 'rgba(241,158,194,0.1)')),
-            #     ]
-            # ),
         )
         .set_global_opts(
             tooltip_opts=opts.TooltipOpts(is_show=False),
@@ -323,17 +326,112 @@ def show_marco_line_graph():
                                     pos_left=50, pos_top=10),
             xaxis_opts=opts.AxisOpts(type_="category", boundary_gap=False),
             legend_opts = opts.LegendOpts( selected_mode="multiple",pos_left=100,pos_top=80),
-            
-
-            # = opts.AnimationOpts(animation_duration = 2000)
 
         )
         
         
     )
     st_pyecharts(c, height="650px")
-show_marco_line_graph()
+    return input_data
+
+MACRO_DATA = show_marco_line_graph()
+
+def show_rolling_window():
+    temp_pd = pd.DataFrame({"She": MACRO_DATA[2], "Time": EVERY_DAY })
+    temp_pd.set_index = "Time"
+    temp_pd['She'] = temp_pd['She'].rolling(10).mean()
     
+
+    a = (
+        Line(init_opts=opts.InitOpts(animation_opts=opts.AnimationOpts(
+                animation_duration=2000, animation_easing="elasticOut"
+            )))
+        .add_xaxis(EVERY_DAY)
+        .add_yaxis("天瑜的!",
+                temp_pd["She"], 
+                is_smooth=True, 
+                symbol = None,
+                markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="max")]),
+                markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")], label_opts=opts.LabelOpts(is_show=False)),
+                areastyle_opts=opts.AreaStyleOpts(opacity=0.2, color="rgba(245,212,217,0.15)"),
+                
+        )
+        .set_series_opts(
+            markarea_opts=opts.MarkAreaOpts(
+                data=[
+                    opts.MarkAreaItem(name="上学🎒", x=("2021-10-08", "2022-01-13")
+                                    ,itemstyle_opts = opts.ItemStyleOpts(color = 'rgba(245,212,217,0.15)')),
+                    opts.MarkAreaItem(name="放寒假🥳", x=("2022-01-13", "2022-02-12")
+                                    ,itemstyle_opts = opts.ItemStyleOpts(color = 'rgba(241,158,194,0.25)')),
+                    opts.MarkAreaItem(name="上学🎒", x=("2022-02-12", "2022-06-25")
+                                    ,itemstyle_opts = opts.ItemStyleOpts(color = 'rgba(245,212,217,0.15)')),
+                                    # color =
+                    opts.MarkAreaItem(name="放暑假🥰", x=("2022-06-25", "2022-08-17")
+                                    ,itemstyle_opts = opts.ItemStyleOpts(color = 'rgba(241,158,194,0.25)')),
+                    opts.MarkAreaItem(name="上学🎒", x=("2022-08-17", "2022-10-04")
+                                    ,itemstyle_opts = opts.ItemStyleOpts(color = 'rgba(245,212,217,0.15)')),
+                    
+                ]
+            ),
+        )
+    
+        .set_global_opts(
+            tooltip_opts=opts.TooltipOpts(is_show=False),
+            title_opts=opts.TitleOpts(title="对话总量的滑动平均(MA)",subtitle="WeChat骚话大赏!",
+                                    pos_left=50, pos_top=10),
+            xaxis_opts=opts.AxisOpts(type_="category", boundary_gap=False),
+            legend_opts = opts.LegendOpts( selected_mode="multiple",pos_left=100,pos_top=80),
+            # = opts.AnimationOpts(animation_duration = 2000)
+
+        )
+        
+        
+    )
+    st_pyecharts(a, height="450px")
+show_rolling_window()
+
+
+def show_heat_graph():
+    average_per_day = len(CHAT_HISTORY) // (24 * 7)
+    record_max = record_min = 0
+    for i in range(len(WEEK_DAY_CNT)):
+        
+        WEEK_DAY_CNT[i][2] -= average_per_day
+        if record_max < WEEK_DAY_CNT[i][2]:
+            record_max = WEEK_DAY_CNT[i][2]
+        if record_min > WEEK_DAY_CNT[i][2]:
+            record_min = WEEK_DAY_CNT[i][2]
+    
+    # for i in range(len(WEEK_DAY_CNT)):
+    #     if WEEK_DAY_CNT[i][2] >= 0:
+    #         WEEK_DAY_CNT[i][2] = (100 * WEEK_DAY_CNT[i][2])/record_max
+    #     if WEEK_DAY_CNT[i][2] < 0:
+    #         WEEK_DAY_CNT[i][2] =(-100 * WEEK_DAY_CNT[i][2])/record_min
+
+    c = (
+        HeatMap(init_opts=opts.InitOpts(height="600px"))
+        .add_xaxis([str(i) for i in range(24)])
+        .add_yaxis(
+            
+            "",
+            ["周一","周二","周三","周四","周五","周六","周七"],
+            WEEK_DAY_CNT,
+            label_opts=opts.LabelOpts(is_show=True, position="inside"),
+        )
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="星期-时间热力图"),
+            visualmap_opts=opts.VisualMapOpts(\
+                min_ = record_min - 1, max_  = record_max + 1, is_calculable=True, orient="horizontal", \
+                    pos_left="center", type_="color", range_opacity=0.9, precision = 0, dimension=2),
+        )
+    )
+
+    st_pyecharts(c)
+
+    
+show_heat_graph()
+
+# slt.write(len(EMOJI_PACKS))
     
 # slt.write([[i, TYPES_CNT[i][0], TYPES_CNT[i][1]] for i in TYPES_CNT])
 # slt.write([str(i)[:10] for i in DAYS])
@@ -374,97 +472,3 @@ show_marco_line_graph()
 # DATE_COLUMN = 'date/time'
 # DATA_URL = ('https://s3-us-west-2.amazonaws.com/'
 #             'streamlit-demo-data/uber-raw-data-sep14.csv.gz')
-
-# @slt.cache
-# def loads_data(nrows):
-#     data = pd.read_csv(DATA_URL, nrows=nrows)
-#     lowercase = lambda x: str(x).lower()
-#     data.rename(lowercase, axis='columns', inplace=True)
-#     data[DATE_COLUMN] = pd.to_datetime(data[DATE_COLUMN])
-#     return data
-
-# data_load_state = slt.text('Loading data...')
-# data = loads_data(10000)
-# data_load_state.text("Done! (using st.cache)")
-
-# if slt.checkbox('Show raw data'):
-#     slt.subheader('Raw data')
-#     slt.write(data)
-
-# slt.subheader('Number of pickups by hour')
-# hist_values = np.histogram(data[DATE_COLUMN].dt.hour, bins=24, range=(0,24))[0]
-# slt.bar_chart(hist_values)
-
-# # Some number in the range 0-23
-# hour_to_filter = slt.slider('hour', 0, 23, 17)
-# filtered_data = data[data[DATE_COLUMN].dt.hour == hour_to_filter]
-
-# slt.subheader('Map of all pickups at %s:00' % hour_to_filter)
-# slt.map(filtered_data)
-
-
-
-# ============================== ============================== 
-# d = slt.date_input(
-#     "When\'s your birthday",
-#     datetime.date(2019, 7, 6))
-# slt.write('Your birthday is:', d)
-
-# slt.info(len(CHAT_HISTORY))
-# def run():
-# chat_history = load_data(ADDRESS)
-# slt.write(len(chat_history))
-# slt.title("Tutorials Streamlit")
-# slt.info("Hello fellow!")
-# slt.header("Header")
-# slt.subheader("SubHeader")
-# slt.success("Success")
-# slt.warning("Warning")
-# slt.markdown("$$  f(x) = x$$")
-# slt.write("Write here.")
-# # img = Image.open("picx1.png")
-# # slt.image(img, width= 300, caption="picx1")
-
-# chat_history = load_data(ADDRESS)
-
-
-# occupation = slt.selectbox("Your occupation", ["Ds", "farmer", "Teacher"])
-# slt.write(occupation)
-
-# location = slt.multiselect("Where do you work?", ["Beijing", "Shanghai", "Chengdu"])
-# slt.write("You select " , len(location), " Locations")
-# level = slt.slider("Whats your level?", 2,100)
-
-# first_name = slt.text_input("Your first name?", "Type here..") 
-# result = ""
-# if slt.button("Submit"):
-#     result = first_name.title()
-#     slt.success(result)
-
-# chat_history = None
-# with open("./chathistory.json", "r", encoding = "utf8") as f:
-#     chat_history = json.load(f)
-
-# slt.write(len(chat_history))
-
-
-#     today = slt.date_input("Today is ", datetime.datetime.now())
-
-#     time_ = slt.time_input("Time is ", datetime.time())
-
-#     slt.json({"Name" : result, "Age" : level})
-
-#     my_bar = slt.progress(0)
-#     for p in range(10):
-#         my_bar.progress(p + 1)
-
-#     # slt.balloons()
-# # sudo rm -rf /Library/Developer/CommandLineTools
-# #   sudo xcode-select --install
-#     slt.sidebar.header("About")
-
-
-# slt.sidebar.write(len(chat_history))
-
-# if __name__ == "__main__":
-#     run()
