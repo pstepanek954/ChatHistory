@@ -412,7 +412,6 @@ def show_heat_graph():
         HeatMap(init_opts=opts.InitOpts(height="600px"))
         .add_xaxis([str(i) for i in range(24)])
         .add_yaxis(
-            
             "",
             ["周一","周二","周三","周四","周五","周六","周七"],
             WEEK_DAY_CNT,
@@ -455,20 +454,3 @@ show_heat_graph()
 # 48：定位分享
 # 34：语音
 # 42：
-
-
-
-# slt.write("Time stamp is ", str(get_local_timestamp( "2022-10-04 10:57:22")))
-# print(d)
-# ============================== ============================== 
-
-
-# import streamlit as st
-# import pandas as pd
-# import numpy as np
-
-# st.title('Uber pickups in NYC')
-
-# DATE_COLUMN = 'date/time'
-# DATA_URL = ('https://s3-us-west-2.amazonaws.com/'
-#             'streamlit-demo-data/uber-raw-data-sep14.csv.gz')
