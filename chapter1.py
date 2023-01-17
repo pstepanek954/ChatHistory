@@ -4,12 +4,15 @@ import json
 import time
 import pandas as pd
 import numpy as np
-import pytz
 from collections import defaultdict
 import pyecharts.options as opts
 from pyecharts.charts import Line, HeatMap
+import random
 from streamlit_echarts import st_pyecharts
 import os
+
+
+
 os.environ['TZ'] = 'Asia/Shanghai'
 
 slt.set_page_config(
@@ -96,7 +99,10 @@ def load_data(address):
     week_day_cnt = [[i, j , 0] for i in range(24) for j in range(7) ] # 统计消息的数量
 
 
-    emoji_packs = []
+    emoji_packs = defaultdict(def_value_list)
+
+    # for i in every_day:
+    #     emoji_packs[i] = []
 
     for idx, i in enumerate(temp): # 统计消息数量
         messenger[i["Des"]] += 1
@@ -118,7 +124,7 @@ def load_data(address):
             tail[i["Type"]][i["Des"]] += 1
 
         if i["Type"] == 47:
-            emoji_packs.append(i)
+            emoji_packs[every_day[start_idx]][i["Des"]] += 1
         
         tmp_wk_detail = datetime.datetime.fromtimestamp(i["CreateTime"])
         wk_day = tmp_wk_detail.weekday()
@@ -175,17 +181,13 @@ def TYPES_CNT_process():
     return TYPES_CNT_dataframe
     
 TOTAL_MSG = len(CHAT_HISTORY)
+slt.session_state.load_data = CHAT_HISTORY
+slt.session_state.emoji_packs = EMOJI_PACKS
+
+# 利用页面缓存减少冲突
 
 slt.markdown("# 奇奇怪怪的聊天站")
 slt.caption("🧐 什么聊天站！进来看看！")
-
-
-if slt.button("点点看！😘"):
-    slt.json(CHAT_HISTORY[-1])
-else:
-    pass
-
-# ============================ ==================================
 
 
 
@@ -210,7 +212,7 @@ def get_msg_vol(timestamp1, timestamp2):
             end = mid - 1
         else:
             start = mid + 1
-    return int(abs(indx1 - indx2))
+    return int(abs(indx1 - indx2)), indx1, indx2
 
 
 def get_interval_time(timestamp1, timestamp2):
@@ -231,14 +233,34 @@ def get_local_time(timeStamp):
     otherStyleTime = time.strftime("%Y-%m-%d %H:%M:%S", t.timetuple())
     return otherStyleTime
 
+
+if slt.button("点点看！😘（也可以一直点！）"):
+    chose_ = random.randint(0, TOTAL_MSG)
+    while CHAT_HISTORY[chose_]["Type"] != 1:
+        chose_ = random.randint(0, TOTAL_MSG)
+        print(chose_)
+    slt.json(CHAT_HISTORY[chose_])
+    slt.write("🤖🤖️ (你的自动服务机器人笨笨熊🐻): 这条消息在 {} 发出，是 {} 发的！—— 播报完毕！(bibi~) ".format(get_local_time(CHAT_HISTORY[chose_]["CreateTime"]),\
+         "瑜瑜" if CHAT_HISTORY[chose_]["Des"] == 1 else "笑笑"))
+    slt.markdown("-----")
+else:
+    pass
+
+# ============================ ==================================
+
+
+
 def show_profile():
+    days = get_interval_time(START_TIMESTAMP, END_TIMESTAMP)
     slt.write("总共有", str(TOTAL_MSG) ,"条消息, 最早的消息来自瑜瑜子，发送时间是", \
         get_local_time(START_TIMESTAMP), "而最晚的消息是笑笑在", get_local_time(END_TIMESTAMP) , \
-            "发送的。", "在这", str(get_interval_time(START_TIMESTAMP, END_TIMESTAMP)), "天中，我们畅所欲言，无话不谈。"  )
-    slt.write("记录显示，在", MAX_MSG_DATE, "这一天，我们是两只大话痨，一共发送了", MAX_MSG_VOL, "条消息，是有史以来最多的一天，\
+            "发送的。", "在这", str(days), "天中，我们畅所欲言，无话不谈。\
+                平均每天要唠唠叨叨",  str(TOTAL_MSG // days  ), "条。")
+    slt.write("记录显示，在", MAX_MSG_DATE, "这一天，我们是两只大话痨，一共发送了", str(MAX_MSG_VOL), "条消息，是有史以来最多的一天，\
         这意味着那24个小时里，我们每隔1分钟就发1条消息，整天不休。" )
     slt.write("2022-08-02 这个日子也比较独特。瑜瑜和笑笑\
-        怒刷了1428条微信记录，其中瑜瑜说了628句。炎炎夏日挡不住恋人的絮絮叨叨💑。")
+        怒刷了1428条微信记录，那天打开了话匣子的瑜瑜发送了626条消息。炎炎夏日挡不住恋人的絮絮叨叨💑。")
+
 
 show_profile()
 
@@ -246,10 +268,12 @@ d = slt.sidebar.date_input(
     "🛩️  聊天记录查询站｜选个日子！ :kiss:",
     datetime.date(2022, 2, 3))
 slt.sidebar.write('你选择的日期 📅 是:', d)
-slt.sidebar.write("Msg volume for the selected day " , d, " is ", get_msg_vol(get_local_timestamp(str(d) + " 00:00:00"), \
-     get_local_timestamp(str(d) + " 23:59:59")))
+ans, idx1, idx2 = get_msg_vol(get_local_timestamp(str(d) + " 00:00:00"), \
+     get_local_timestamp(str(d) + " 23:59:59"))
+slt.sidebar.write("Msg volume for the selected day " , d, " is ", str(ans))
+slt.sidebar.write("这一天， \n \n瑜瑜发了{}条文字，甩了{}条表情包\
+    ；\n \n 笑笑发了{}条文字，甩了{}个表情包".format(str(EVERY_DAY_DETAIL[str(d)][1][1]), EVERY_DAY_DETAIL[str(d)][47][1], EVERY_DAY_DETAIL[str(d)][1][0], EVERY_DAY_DETAIL[str(d)][47][0]))
 slt.sidebar.markdown("------")
-slt.sidebar.write()
 # slt.write(EVERY_DAY_DETAIL[str(d)])
 
 
@@ -309,6 +333,7 @@ def show_marco_line_graph():
                 is_smooth=True,
                 markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="max")] ),
                 markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")],  \
+
                     label_opts=opts.LabelOpts(is_show=False)))
                 
         .add_yaxis("差!", 
@@ -319,17 +344,16 @@ def show_marco_line_graph():
                     label_opts=opts.LabelOpts(is_show=False)))
         .set_series_opts(
             label_opts=opts.LabelOpts(is_show=False),
+            # markline_opts=opts.MarkLineOpts(data = [opts.MarkLineItem(xco ord = "2022-01-01")])  
+            
         )
         .set_global_opts(
             tooltip_opts=opts.TooltipOpts(is_show=False),
             title_opts=opts.TitleOpts(title="对话数量",subtitle="WeChat骚话大赏!",
-                                    pos_left=50, pos_top=10),
+                                    pos_left=0, pos_top=5),
             xaxis_opts=opts.AxisOpts(type_="category", boundary_gap=False),
             legend_opts = opts.LegendOpts( selected_mode="multiple",pos_left=100,pos_top=80),
-
         )
-        
-        
     )
     st_pyecharts(c, height="650px")
     return input_data
@@ -378,7 +402,7 @@ def show_rolling_window():
         .set_global_opts(
             tooltip_opts=opts.TooltipOpts(is_show=False),
             title_opts=opts.TitleOpts(title="对话总量的滑动平均(MA)",subtitle="WeChat骚话大赏!",
-                                    pos_left=50, pos_top=10),
+                                    pos_left=0, pos_top=5),
             xaxis_opts=opts.AxisOpts(type_="category", boundary_gap=False),
             legend_opts = opts.LegendOpts( selected_mode="multiple",pos_left=100,pos_top=80),
             # = opts.AnimationOpts(animation_duration = 2000)
@@ -429,6 +453,7 @@ def show_heat_graph():
 
     
 show_heat_graph()
+# slt.write(EMOJI_PACKS)
 
 # slt.write(len(EMOJI_PACKS))
     
