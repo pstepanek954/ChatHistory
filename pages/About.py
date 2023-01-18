@@ -105,7 +105,6 @@ def get_daily_emoji():
     )
     st_pyecharts(c)
     return input_df
-
 INPUT_DF = get_daily_emoji()
 
 
