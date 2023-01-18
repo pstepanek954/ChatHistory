@@ -99,7 +99,7 @@ def load_data(address):
     week_day_cnt = [[i, j , 0] for i in range(24) for j in range(7) ] # 统计消息的数量
 
 
-    emoji_packs = defaultdict(def_value_list)
+    emoji_packs = []
 
     # for i in every_day:
     #     emoji_packs[i] = []
@@ -124,7 +124,9 @@ def load_data(address):
             tail[i["Type"]][i["Des"]] += 1
 
         if i["Type"] == 47:
-            emoji_packs[every_day[start_idx]][i["Des"]] += 1
+            emoji_packs.append(i)
+            # emoji_packs[every_day[start_idx]][i["Des"]] += 1
+            
         
         tmp_wk_detail = datetime.datetime.fromtimestamp(i["CreateTime"])
         wk_day = tmp_wk_detail.weekday()
@@ -183,7 +185,8 @@ def TYPES_CNT_process():
 TOTAL_MSG = len(CHAT_HISTORY)
 slt.session_state.load_data = CHAT_HISTORY
 slt.session_state.emoji_packs = EMOJI_PACKS
-
+slt.session_state.every_day = EVERY_DAY
+# 
 # 利用页面缓存减少冲突
 
 slt.markdown("# 奇奇怪怪的聊天站")
