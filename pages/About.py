@@ -5,7 +5,6 @@ import time
 import re
 from collections import defaultdict
 
-
 import pyecharts.options as opts
 from pyecharts.charts import Line, HeatMap
 import random
@@ -42,7 +41,7 @@ def get_local_time_ymd(timeStamp):
     return otherStyleTime
 
 
-slt.header("这里是！🤔表情包研究所！")
+slt.header("这里是！🤔笑笑的表情包研究所！")
 
 
 EV_DAY_EMOJIS = slt.session_state.emoji_packs
