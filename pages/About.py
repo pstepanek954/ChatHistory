@@ -99,9 +99,9 @@ def get_daily_emoji():
     
     for i in EVERY_DAY:
         # print(i)
-        total_msg_cnt.append(EVERY_DAY_DETAIL[i][0] + EVERY_DAY_DETAIL[i][1])
+        total_msg_cnt.append(EVERY_DAY_DETAIL[i][1][0] + EVERY_DAY_DETAIL[i][1][1])
         
-
+    print(total_msg_cnt)
     for i in EVERY_DAY:
         emoji_cnts[i] = 0
     for i in EV_DAY_EMOJIS:
@@ -114,109 +114,143 @@ def get_daily_emoji():
     input_df["Rolling" ]=  input_df["EMOJIS"].rolling(10).mean()
     input_df["TOTAL_MSG"] = total_msg_cnt
     input_df.index = input_df["Time"]
-    # tmp = list(inp)
-    c = (
-        Bar()
+    input_df["Percent"] = input_df.apply(lambda x: x['EMOJIS'] /  x['TOTAL_MSG'], axis=1)
 
-            # init_opts=opts.InitOpts(animation_opts=opts.AnimationOpts(
-            #     animation_duration=2000, animation_easing="elasticOut"
-            # ))
-        .add_xaxis(input_df["Time"])
-        .add_yaxis("总计的表情包数!",
-                input_df["EMOJIS"],
-                # is_smooth=True, 
-                # symbol = None,
-                yaxis_index = 0,
-                # linestyle_opts=opts.LineStyleOpts(color='pink'),
-                # markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="max")]),
-                # markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")],  \
-                #     label_opts=opts.LabelOpts(is_show=False)),
+    input_df['Percent'] = input_df['Percent'].apply(lambda x: format(x, '.2f'))
+    # stickers_divide_total = []
+    # for i in range(len(input_df["EMOJIS"])):
+    #     stickers_divide_total.append(round(input_df["EMOJIS"][i]*100/total_msg_cnt[i], 2))
+    #     # total_msg_cnt 
+
+
+    # first = (
+    #     Line(init_opts=opts.InitOpts(animation_opts=opts.AnimationOpts(
+    #             animation_duration=2000, animation_easing="elasticOut"
+    #         )))
+    #     .add_xaxis(input_df["Time"])
+    #     .add_yaxis(
+    #             "总计的表情包数!",
+    #             input_df["EMOJIS"],
+    #             is_smooth=True, 
+    #             symbol = None,
+    #             yaxis_index = 0,
+    #             linestyle_opts=opts.LineStyleOpts(color='pink'),
+    #             markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="max")]),
+    #             markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")],  \
+    #                 label_opts=opts.LabelOpts(is_show=False)),
                 
-                )
-        .add_yaxis("窗口为10天的滑动平均!",
-                input_df["Rolling"],
-                # is_smooth=True, 
-                # symbol = None,
-                yaxis_index = 1,
-                # linestyle_opts=opts.LineStyleOpts(color='yellow', width = '1'),
-                # markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="max")]),
-                )
-        .extend_axis(
-            yaxis=opts.AxisOpts(
-                    type_="value",
-                    name="总计的表情包数!",
-                    min_=0,
-                    max_=250,
-                    position="right",
-                    axisline_opts=opts.AxisLineOpts(
-                        linestyle_opts=opts.LineStyleOpts(color="#675bba")
-                    ),
-                    axislabel_opts=opts.LabelOpts(formatter="{value} 个！"),
-                    splitline_opts=opts.SplitLineOpts(
-                        is_show=True, linestyle_opts=opts.LineStyleOpts(opacity=1)
-                    ),
-                    # splitline_opts=opts.SplitLineOpts(
-                    #     is_show=True, linestyle_opts=opts.LineStyleOpts(opacity=1)
-                    # ),
-                )
-        )
-        .extend_axis(
-            yaxis=opts.AxisOpts(
-                    type_="value",
-                    name="表情包数/总聊天数",
-                    min_=0,
-                    max_=250,
-                    position="left",
-                    axisline_opts=opts.AxisLineOpts(
-                        linestyle_opts=opts.LineStyleOpts(color="#675bba")
-                    ),
-                    axislabel_opts=opts.LabelOpts(formatter="{value}"),
-                    splitline_opts=opts.SplitLineOpts(
-                        is_show=True, linestyle_opts=opts.LineStyleOpts(opacity=1)
-                    ),
-                )
-        )
+    #             )
+    #     .add_yaxis(
+    #             "窗口为10天的滑动平均!",
+    #             input_df["Rolling"],
+    #             is_smooth=True, 
+    #             symbol = None,
+    #             # yaxis_index = 1,
+    #             color="#5793f3",
+    #             linestyle_opts=opts.LineStyleOpts(color='yellow', width = '1'),
+    #             markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="max")]),
+    #             )
         
-        # .set_series_opts(
-        #     label_opts=opts.LabelOpts(is_show=False),
-        # )
+    #     .set_series_opts(
+    #         label_opts=opts.LabelOpts(is_show=False),
+    #     )
+    #     .set_global_opts(
+            
+    #         xaxis_opts=opts.AxisOpts(type_="category", boundary_gap=False),
+    #         # yaxis_opts=opts.AxisOpts(
+    #         #     name="窗口为10天的滑动平均!",
+    #         #     min_ = 0,
+    #         #     max_ = 100,
+    #         #     position="right",
+    #         #     offset=50,
+    #         #     axisline_opts=opts.AxisLineOpts(
+    #         #         linestyle_opts=opts.LineStyleOpts(color="#5793f3")
+    #         #     ),
+    #         #     axislabel_opts=opts.LabelOpts(formatter="{value} "),
+    #         # ),
+    #         tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="cross"),
+    #         title_opts=opts.TitleOpts(title="表情包数量💝",subtitle="比谁更会发图！",
+    #                                 pos_left=0, pos_top=5),
+    #         legend_opts = opts.LegendOpts( selected_mode="multiple",pos_left=100,pos_top=80),
+    #     )
+    # )
+
+    colors = ["#5793f3", "#d14a61", "#675bba"]
+    x_data = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
+    legend_list = ["蒸发量", "降水量", "平均温度"]
+    
+    bar = (
+        Bar(init_opts=opts.InitOpts(width="1260px", height="720px"))
+        .add_xaxis(xaxis_data=list(input_df["Time"]))
+        .add_yaxis(
+            series_name="Emoji数量", y_axis=list(input_df["EMOJIS"]), yaxis_index=0, color=colors[1], category_gap=0,
+        )
+        .add_yaxis(
+            series_name="Emoji滑动平均", y_axis=list(input_df["Rolling"]), yaxis_index=1, color=colors[0], category_gap=0,
+        )
+        .extend_axis(
+            yaxis=opts.AxisOpts(
+                name="蒸发量",
+                type_="value",
+                min_=0,
+                max_=250,
+                position="right",
+                axisline_opts=opts.AxisLineOpts(
+                    linestyle_opts=opts.LineStyleOpts(color=colors[1])
+                ),
+                axislabel_opts=opts.LabelOpts(formatter="{value} ml"),
+            )
+        )
+        .extend_axis(
+            yaxis=opts.AxisOpts(
+                type_="value",
+                name="温度",
+                min_=-0.2,
+                max_=0.6,
+                position="left",
+                axisline_opts=opts.AxisLineOpts(
+                    linestyle_opts=opts.LineStyleOpts(color=colors[2])
+                ),
+                axislabel_opts=opts.LabelOpts(formatter="{value} °C"),
+                splitline_opts=opts.SplitLineOpts(
+                    is_show=True, linestyle_opts=opts.LineStyleOpts(opacity=1)
+                ),
+            )
+        )
+        .set_series_opts(
+            label_opts=opts.LabelOpts(is_show=False),
+        )
         .set_global_opts(
-            tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="cross"),
-            title_opts=opts.TitleOpts(title="表情包数量💝",subtitle="比谁更会发图！",
-                                    pos_left=0, pos_top=5),
-            # xaxis_opts=opts.AxisOpts(type_="category", boundary_gap=False),
             yaxis_opts=opts.AxisOpts(
-                name="窗口为10天的滑动平均!",
-               
+                type_="value",
+                name="蒸发量",
+                min_=0,
+                max_=100,
                 position="right",
                 offset=80,
                 axisline_opts=opts.AxisLineOpts(
-                    linestyle_opts=opts.LineStyleOpts(color="#5793f3")
+                    linestyle_opts=opts.LineStyleOpts(color=colors[0])
                 ),
-                axislabel_opts=opts.LabelOpts(formatter="{value} "),
+                axislabel_opts=opts.LabelOpts(formatter="{value} ml"),
             ),
-            # legend_opts = opts.LegendOpts( selected_mode="multiple",pos_left=100,pos_top=80),
+            tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="cross"),
         )
     )
-    d =  (
+
+    line = (
         Line()
-        .add_xaxis(input_df["Time"])
+        .add_xaxis(xaxis_data=list(input_df["Time"]))
         .add_yaxis(
-            "表情包数/总聊天数",
-            # [input_df["EMOJIS"][i] / input_df["TOTAL_MSG"][i] for i in range(len(input_df["EMOJIS"]))],
-            input_df["EMOJIS"],
-            yaxis_index = 2,
-            color="#675bba",
-            label_opts=opts.LabelOpts(is_show=False),
+            series_name="平均温度", y_axis=list(input_df["Percent"]), yaxis_index=2, color=colors[2]
         )
     )
-    
-    d.overlap(c)
+    bar.overlap(line)
     grid = Grid()
-    grid.add(d, opts.GridOpts(pos_left="5%", pos_right="20%"), is_control_axis_index=True)
-    
+    grid.add(bar, opts.GridOpts(pos_left="5%", pos_right="20%"), is_control_axis_index=True)
 
     st_pyecharts(grid)
+
+    # st_pyecharts(d)
     return input_df
     
 INPUT_DF = get_daily_emoji()
@@ -232,95 +266,3 @@ def TimeSeries_analysis():
     
     print("P-value = {}".format(test[1]) )
     
-
-def test():
-    x_data = ["{}月".format(i) for i in range(1, 13)]
-    bar = (
-        Bar()
-        .add_xaxis(x_data)
-        .add_yaxis(
-            "蒸发量",
-            [2.0, 4.9, 7.0, 23.2, 25.6, 76.7, 135.6, 162.2, 32.6, 20.0, 6.4, 3.3],
-            yaxis_index=0,
-            color="#d14a61",
-        )
-        .add_yaxis(
-            "降水量",
-            [2.6, 5.9, 9.0, 26.4, 28.7, 70.7, 175.6, 182.2, 48.7, 18.8, 6.0, 2.3],
-            yaxis_index=1,
-            color="#5793f3",
-        )
-        .extend_axis(
-            yaxis=opts.AxisOpts(
-                name="蒸发量",
-                type_="value",
-                min_=0,
-                max_=250,
-                position="right",
-                axisline_opts=opts.AxisLineOpts(
-                    linestyle_opts=opts.LineStyleOpts(color="#d14a61")
-                ),
-                axislabel_opts=opts.LabelOpts(formatter="{value} ml"),
-            )
-        )
-        .extend_axis(
-            yaxis=opts.AxisOpts(
-                type_="value",
-                name="温度",
-                min_=0,
-                max_=25,
-                position="left",
-                axisline_opts=opts.AxisLineOpts(
-                    linestyle_opts=opts.LineStyleOpts(color="#675bba")
-                ),
-                axislabel_opts=opts.LabelOpts(formatter="{value} °C"),
-                splitline_opts=opts.SplitLineOpts(
-                    is_show=True, linestyle_opts=opts.LineStyleOpts(opacity=1)
-                ),
-            )
-        )
-        .set_global_opts(
-            yaxis_opts=opts.AxisOpts(
-                name="降水量",
-                min_=0,
-                max_=250,
-                position="right",
-                offset=80,
-                axisline_opts=opts.AxisLineOpts(
-                    linestyle_opts=opts.LineStyleOpts(color="#5793f3")
-                ),
-                axislabel_opts=opts.LabelOpts(formatter="{value} ml"),
-            ),
-            title_opts=opts.TitleOpts(title="Grid-多 Y 轴示例"),
-            tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="cross"),
-        )
-    )
-
-    line = (
-        Line()
-        .add_xaxis(x_data)
-        .add_yaxis(
-            "平均温度",
-            [2.0, 2.2, 3.3, 4.5, 6.3, 10.2, 20.3, 23.4, 23.0, 16.5, 12.0, 6.2],
-            yaxis_index=2,
-            color="#675bba",
-            label_opts=opts.LabelOpts(is_show=False),
-        )
-    )
-
-    bar.overlap(line)
-    grid = Grid()
-    grid.add(bar, opts.GridOpts(pos_left="5%", pos_right="20%"), is_control_axis_index=True)
-    st_pyecharts(grid)
-
-test()
-    # print(idxx)
-
-    # print(idxx_2)
-
-    # print(quantity_idx_1)
-
-    # print(quantity_idx_2)
-
-    # print(quantity_idx_3)
-# slt.write(EV_DAY_EMOJIS[1])

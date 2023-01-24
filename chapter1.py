@@ -351,7 +351,8 @@ def show_marco_line_graph():
             
         )
         .set_global_opts(
-            tooltip_opts=opts.TooltipOpts(is_show=False),
+            # toolbox_opts=opts.ToolboxOpts(),
+            tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="cross"),
             title_opts=opts.TitleOpts(title="对话数量",subtitle="WeChat骚话大赏!",
                                     pos_left=0, pos_top=5),
             xaxis_opts=opts.AxisOpts(type_="category", boundary_gap=False),
@@ -403,7 +404,8 @@ def show_rolling_window():
         )
     
         .set_global_opts(
-            tooltip_opts=opts.TooltipOpts(is_show=False),
+            
+            tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="cross"),
             title_opts=opts.TitleOpts(title="对话总量的滑动平均(MA)",subtitle="WeChat骚话大赏!",
                                     pos_left=0, pos_top=5),
             xaxis_opts=opts.AxisOpts(type_="category", boundary_gap=False),
@@ -445,6 +447,7 @@ def show_heat_graph():
             label_opts=opts.LabelOpts(is_show=True, position="inside"),
         )
         .set_global_opts(
+            tooltip_opts=opts.TooltipOpts(trigger="item", axis_pointer_type="cross"),
             title_opts=opts.TitleOpts(title="星期-时间热力图"),
             visualmap_opts=opts.VisualMapOpts(\
                 min_ = record_min - 1, max_  = record_max + 1, is_calculable=True, orient="horizontal", \
