@@ -38,3 +38,4 @@ if __name__ == "__main__":
     a.fly(2)
     f = "./test.log"
     t = open(f, "r") 
+    # /Users/apple/Library/Containers/com.tencent.xinWeChat/Data/Library/Application Support/com.tencent.xinWeChat

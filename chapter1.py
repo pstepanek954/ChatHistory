@@ -21,7 +21,7 @@ slt.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",  
 )
-slt.sidebar.header("About One")
+
 
 
 if 'first_visit' not in slt.session_state:
@@ -186,6 +186,7 @@ TOTAL_MSG = len(CHAT_HISTORY)
 slt.session_state.load_data = CHAT_HISTORY
 slt.session_state.emoji_packs = EMOJI_PACKS
 slt.session_state.every_day = EVERY_DAY
+slt.session_state.every_day_detail = EVERY_DAY_DETAIL
 # 
 # 利用页面缓存减少冲突
 
@@ -237,22 +238,6 @@ def get_local_time(timeStamp):
     return otherStyleTime
 
 
-if slt.button("点点看！😘（也可以一直点！）"):
-    chose_ = random.randint(0, TOTAL_MSG)
-    while CHAT_HISTORY[chose_]["Type"] != 1:
-        chose_ = random.randint(0, TOTAL_MSG)
-        print(chose_)
-    slt.json(CHAT_HISTORY[chose_])
-    slt.write("🤖🤖️ (你的自动服务机器人笨笨熊🐻): 这条消息在 {} 发出，是 {} 发的！—— 播报完毕！(bibi~) ".format(get_local_time(CHAT_HISTORY[chose_]["CreateTime"]),\
-         "瑜瑜" if CHAT_HISTORY[chose_]["Des"] == 1 else "笑笑"))
-    slt.markdown("-----")
-else:
-    pass
-
-# ============================ ==================================
-
-
-
 def show_profile():
     days = get_interval_time(START_TIMESTAMP, END_TIMESTAMP)
     slt.write("总共有", str(TOTAL_MSG) ,"条消息, 最早的消息来自瑜瑜子，发送时间是", \
@@ -267,16 +252,31 @@ def show_profile():
 
 show_profile()
 
-d = slt.sidebar.date_input(
-    "🛩️  聊天记录查询站｜选个日子！ :kiss:",
-    datetime.date(2022, 2, 3))
-slt.sidebar.write('你选择的日期 📅 是:', d)
-ans, idx1, idx2 = get_msg_vol(get_local_timestamp(str(d) + " 00:00:00"), \
-     get_local_timestamp(str(d) + " 23:59:59"))
-slt.sidebar.write("Msg volume for the selected day " , d, " is ", str(ans))
-slt.sidebar.write("这一天， \n \n瑜瑜发了{}条文字，甩了{}条表情包\
-    ；\n \n 笑笑发了{}条文字，甩了{}个表情包".format(str(EVERY_DAY_DETAIL[str(d)][1][1]), EVERY_DAY_DETAIL[str(d)][47][1], EVERY_DAY_DETAIL[str(d)][1][0], EVERY_DAY_DETAIL[str(d)][47][0]))
-slt.sidebar.markdown("------")
+def show_sidebar():
+    slt.sidebar.header("一些小玩具🧸!")
+    d = slt.sidebar.date_input(
+        "🛩️  聊天记录查询站｜选个日子！ :kiss:",
+        datetime.date(2022, 1, 1))
+    slt.sidebar.write('你选择的日期 📅 是:', d)
+    ans, idx1, idx2 = get_msg_vol(get_local_timestamp(str(d) + " 00:00:00"), \
+        get_local_timestamp(str(d) + " 23:59:59"))
+    slt.sidebar.write("Msg volume for the selected day " , d, " is ", str(ans))
+    slt.sidebar.write("这一天， \n \n瑜瑜发了{}条文字，甩了{}条表情包\
+        ；\n \n 笑笑发了{}条文字，甩了{}个表情包".format(str(EVERY_DAY_DETAIL[str(d)][1][1]), EVERY_DAY_DETAIL[str(d)][47][1], EVERY_DAY_DETAIL[str(d)][1][0], EVERY_DAY_DETAIL[str(d)][47][0]))
+    slt.sidebar.markdown("------")
+
+    if slt.sidebar.button("点点看！😘（也可以一直点！）"):
+        chose_ = random.randint(0, TOTAL_MSG)
+        while CHAT_HISTORY[chose_]["Type"] != 1:
+            chose_ = random.randint(0, TOTAL_MSG)
+            print(chose_)
+        slt.sidebar.json(CHAT_HISTORY[chose_])
+        slt.sidebar.write("🤖🤖️ (你的自动服务机器人笨笨熊🐻): 这条消息在 {} 发出，是 {} 发的！—— 播报完毕！(bibi~) ".format(get_local_time(CHAT_HISTORY[chose_]["CreateTime"]),\
+            "瑜瑜" if CHAT_HISTORY[chose_]["Des"] == 1 else "笑笑"))
+        slt.sidebar.markdown("-----")
+    else:
+        pass
+show_sidebar()
 # slt.write(EVERY_DAY_DETAIL[str(d)])
 
 
