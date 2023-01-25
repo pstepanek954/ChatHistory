@@ -57,6 +57,7 @@ EVERY_DAY = slt.session_state.every_day
 EVERY_DAY_DETAIL = slt.session_state.every_day_detail
 
 
+# print(EVERY_DAY_DETAIL)
 
 def EMOJI_ANALYSIS():
     
@@ -98,10 +99,13 @@ def get_daily_emoji():
     total_msg_cnt = []
     
     for i in EVERY_DAY:
-        # print(i)
-        total_msg_cnt.append(EVERY_DAY_DETAIL[i][1][0] + EVERY_DAY_DETAIL[i][1][1])
+        tmp = 0
+        for k in EVERY_DAY_DETAIL[i]:
+            tmp += (EVERY_DAY_DETAIL[i][k][0] + EVERY_DAY_DETAIL[i][k][1])
+        total_msg_cnt.append(tmp)
         
-    print(total_msg_cnt)
+        
+    # print(total_msg_cnt)
     for i in EVERY_DAY:
         emoji_cnts[i] = 0
     for i in EV_DAY_EMOJIS:
@@ -117,67 +121,9 @@ def get_daily_emoji():
     input_df["Percent"] = input_df.apply(lambda x: x['EMOJIS'] /  x['TOTAL_MSG'], axis=1)
 
     input_df['Percent'] = input_df['Percent'].apply(lambda x: format(x, '.2f'))
-    # stickers_divide_total = []
-    # for i in range(len(input_df["EMOJIS"])):
-    #     stickers_divide_total.append(round(input_df["EMOJIS"][i]*100/total_msg_cnt[i], 2))
-    #     # total_msg_cnt 
-
-
-    # first = (
-    #     Line(init_opts=opts.InitOpts(animation_opts=opts.AnimationOpts(
-    #             animation_duration=2000, animation_easing="elasticOut"
-    #         )))
-    #     .add_xaxis(input_df["Time"])
-    #     .add_yaxis(
-    #             "总计的表情包数!",
-    #             input_df["EMOJIS"],
-    #             is_smooth=True, 
-    #             symbol = None,
-    #             yaxis_index = 0,
-    #             linestyle_opts=opts.LineStyleOpts(color='pink'),
-    #             markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="max")]),
-    #             markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")],  \
-    #                 label_opts=opts.LabelOpts(is_show=False)),
-                
-    #             )
-    #     .add_yaxis(
-    #             "窗口为10天的滑动平均!",
-    #             input_df["Rolling"],
-    #             is_smooth=True, 
-    #             symbol = None,
-    #             # yaxis_index = 1,
-    #             color="#5793f3",
-    #             linestyle_opts=opts.LineStyleOpts(color='yellow', width = '1'),
-    #             markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="max")]),
-    #             )
-        
-    #     .set_series_opts(
-    #         label_opts=opts.LabelOpts(is_show=False),
-    #     )
-    #     .set_global_opts(
-            
-    #         xaxis_opts=opts.AxisOpts(type_="category", boundary_gap=False),
-    #         # yaxis_opts=opts.AxisOpts(
-    #         #     name="窗口为10天的滑动平均!",
-    #         #     min_ = 0,
-    #         #     max_ = 100,
-    #         #     position="right",
-    #         #     offset=50,
-    #         #     axisline_opts=opts.AxisLineOpts(
-    #         #         linestyle_opts=opts.LineStyleOpts(color="#5793f3")
-    #         #     ),
-    #         #     axislabel_opts=opts.LabelOpts(formatter="{value} "),
-    #         # ),
-    #         tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="cross"),
-    #         title_opts=opts.TitleOpts(title="表情包数量💝",subtitle="比谁更会发图！",
-    #                                 pos_left=0, pos_top=5),
-    #         legend_opts = opts.LegendOpts( selected_mode="multiple",pos_left=100,pos_top=80),
-    #     )
-    # )
 
     colors = ["#5793f3", "#d14a61", "#675bba"]
-    x_data = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
-    legend_list = ["蒸发量", "降水量", "平均温度"]
+    legend_list = ["Emoji滑动平均", "Emoji总量", "表情包浓度"]
     
     bar = (
         Bar(init_opts=opts.InitOpts(width="1260px", height="720px"))
@@ -190,28 +136,28 @@ def get_daily_emoji():
         )
         .extend_axis(
             yaxis=opts.AxisOpts(
-                name="蒸发量",
+                name=legend_list[0],
                 type_="value",
                 min_=0,
-                max_=250,
+                max_=max(input_df["Rolling"]) + 50,
                 position="right",
                 axisline_opts=opts.AxisLineOpts(
                     linestyle_opts=opts.LineStyleOpts(color=colors[1])
                 ),
-                axislabel_opts=opts.LabelOpts(formatter="{value} ml"),
+                axislabel_opts=opts.LabelOpts(formatter="{value} 条"),
             )
         )
         .extend_axis(
             yaxis=opts.AxisOpts(
                 type_="value",
-                name="温度",
-                min_=-0.2,
-                max_=0.6,
+                name=legend_list[2],
+                min_=float(min(input_df["Percent"])) - float(max(input_df["Percent"])),
+                max_=max(input_df["Percent"]),
                 position="left",
                 axisline_opts=opts.AxisLineOpts(
                     linestyle_opts=opts.LineStyleOpts(color=colors[2])
                 ),
-                axislabel_opts=opts.LabelOpts(formatter="{value} °C"),
+                axislabel_opts=opts.LabelOpts(formatter="{value} %"),
                 splitline_opts=opts.SplitLineOpts(
                     is_show=True, linestyle_opts=opts.LineStyleOpts(opacity=1)
                 ),
@@ -223,9 +169,9 @@ def get_daily_emoji():
         .set_global_opts(
             yaxis_opts=opts.AxisOpts(
                 type_="value",
-                name="蒸发量",
-                min_=0,
-                max_=100,
+                name=legend_list[1],
+                min_=0, 
+                max_=max(input_df["EMOJIS"]) + 50,
                 position="right",
                 offset=80,
                 axisline_opts=opts.AxisLineOpts(
@@ -241,7 +187,7 @@ def get_daily_emoji():
         Line()
         .add_xaxis(xaxis_data=list(input_df["Time"]))
         .add_yaxis(
-            series_name="平均温度", y_axis=list(input_df["Percent"]), yaxis_index=2, color=colors[2]
+            series_name="表情包浓度", y_axis=list(input_df["Percent"]), yaxis_index=2, color=colors[2]
         )
     )
     bar.overlap(line)
@@ -250,7 +196,11 @@ def get_daily_emoji():
 
     st_pyecharts(grid)
 
-    # st_pyecharts(d)
+    slt.write("这里说一个非常非常巧合的事情。我的前一个聊天记录分析网站，数据截止到2022年3月18日，就在这一天之后，也就是2022-03-19这个日子，\
+        我们的表情包浓度突然特别高——数字离谱到我甚至有些不敢相信：", max(input_df["Percent"]), "!")
+    slt.markdown("> 这意味着那一天我们有超过三分之一的对话是用表情包来表示的，更可怕的是，这还是算入了笑笑碎碎念一般的消息在内的比例。")
+    slt.write("于是好奇心驱使我去看了看那天具体的聊天记录📝，画风是这样的：")
+    
     return input_df
     
 INPUT_DF = get_daily_emoji()
@@ -261,8 +211,10 @@ def TimeSeries_analysis():
     
     del temp_ipt["Time"]
     del temp_ipt["Rolling"]
-    print(temp_ipt)
+    # print(temp_ipt)
     test = adf(temp_ipt, autolag="AIC")
     
-    print("P-value = {}".format(test[1]) )
-    
+    # print("P-value = {}".format(test[1]) )
+
+# for i in EVERY_DAY:
+#     print(i)
