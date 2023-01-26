@@ -92,7 +92,6 @@ def EMOJI_ANALYSIS():
     slt.markdown("- 和最开始一样，笑笑对数据做了一个滑动平均，每一天的实际表情包发送量取了过去10天之期望，这样把整体趋势更好滴表现出来～")
 
 
-
 def get_daily_emoji():
     EMOJI_ANALYSIS()
     emoji_cnts = dict()
@@ -103,11 +102,10 @@ def get_daily_emoji():
         for k in EVERY_DAY_DETAIL[i]:
             tmp += (EVERY_DAY_DETAIL[i][k][0] + EVERY_DAY_DETAIL[i][k][1])
         total_msg_cnt.append(tmp)
-        
-        
-    # print(total_msg_cnt)
+
     for i in EVERY_DAY:
         emoji_cnts[i] = 0
+        
     for i in EV_DAY_EMOJIS:
         cur_day = get_local_time_ymd(i["CreateTime"])[:10]
         cur_emoji = i["Message"]
@@ -200,21 +198,45 @@ def get_daily_emoji():
         我们的表情包浓度突然特别高——数字离谱到我甚至有些不敢相信：", max(input_df["Percent"]), "!")
     slt.markdown("> 这意味着那一天我们有超过三分之一的对话是用表情包来表示的，更可怕的是，这还是算入了笑笑碎碎念一般的消息在内的比例。")
     slt.write("于是好奇心驱使我去看了看那天具体的聊天记录📝，画风是这样的：")
+    slt.markdown("> 哈哈哈哈哈！")
+
+    slt.write("另外一个很好玩的事情是，除了我们相遇、相聊、相互喜欢前的暧昧期外，我们从2021年10月18日后，只有一天没有发送表情包：2022年2月27日。那一天一定发生了很多，我们忙着见面，少用表情包传达感情。")
     
     return input_df
     
 INPUT_DF = get_daily_emoji()
 
-def TimeSeries_analysis():
-    temp_ipt = INPUT_DF
-    temp_ipt.index = [(i+ 1) for i in range(len(EVERY_DAY))]
+def emoji_type_analysis():
+    # print(len(EMOJI_TYPES))
+    emoji_type =  sorted(EMOJI_TYPES.items(),key = lambda x:x[1],reverse = True)
+    a = 0
+    for i in range(10):
+        slt.write(emoji_type[i])
+    slt.markdown("> 因为技术原因，微信本地没有提供明文状态的表情包图片，\
+        相关数据经过加密后存储在文本文件中。通过一些溯源手段笑笑获取了所有的加密文件，但是由于不知如何破解\
+            ，所以最终无法通过聊天记录文本直接对应到图片。这直接导致工作量迅速增加。因为笑笑只能先得到一个md5加密后的序列，然后到聊天记录中对应消息出现的位置，\
+                最后确定表情是哪一个。这种Hard Code的方式实在不讨我喜。")
+    slt.markdown("下面是一段加密后呈现乱码的表情包文件的实例：")
+
+        # a += emoji_type[i][1]
+    # print(a)
+    # slt.write(emoji_type[0])
+    # slt.write(emoji_type[1])
+    # slt.write(emoji_type[2])
+    # slt.write(emoji_type[3])
+    # pass
+
+emoji_type_analysis()
+# def TimeSeries_analysis():
+#     temp_ipt = INPUT_DF
+#     temp_ipt.index = [(i+ 1) for i in range(len(EVERY_DAY))]
     
-    del temp_ipt["Time"]
-    del temp_ipt["Rolling"]
-    # print(temp_ipt)
-    test = adf(temp_ipt, autolag="AIC")
+#     del temp_ipt["Time"]
+#     del temp_ipt["Rolling"]
+#     # print(temp_ipt)
+#     test = adf(temp_ipt, autolag="AIC")
     
-    # print("P-value = {}".format(test[1]) )
+#     # print("P-value = {}".format(test[1]) )
 
 # for i in EVERY_DAY:
 #     print(i)

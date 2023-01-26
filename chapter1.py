@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from collections import defaultdict
 import pyecharts.options as opts
-from pyecharts.charts import Line, HeatMap
+from pyecharts.charts import Line, HeatMap, Grid, Bar
 import random
 from streamlit_echarts import st_pyecharts
 import os
@@ -68,6 +68,9 @@ def load_data(address):
     temp = ""
     max_msg_vol = 0
     max_msg_date = 0
+    hours_msgs = [0 for _ in range(24)] # 16w消息分布在哪些小时中
+    weekday_msgs = [0 for _ in range(7)] # 16w消息分布在星期几
+    
     
 
     with open(address, "r", encoding = "utf8")  as f:
@@ -132,13 +135,15 @@ def load_data(address):
         wk_day = tmp_wk_detail.weekday()
         wk_hour = int(tmp_wk_detail.hour)
         week_day_cnt[wk_hour * 7 + wk_day][2] += 1
+        hours_msgs[wk_hour] += 1 
+        weekday_msgs[wk_day] += 1
 
 
 
     every_day_detail[every_day[-1]] = tail
 
     return temp, messenger, left, right, types, every_day, every_day_timestamp, \
-        every_day_detail, max_msg_date, max_msg_vol, week_day_cnt, emoji_packs
+        every_day_detail, max_msg_date, max_msg_vol, week_day_cnt, emoji_packs, hours_msgs, weekday_msgs
 
 
 
@@ -150,7 +155,8 @@ def def_value_list():
 
 ADDRESS = "./chathistory.json"
 CHAT_HISTORY, TOTAL_CNT, START_TIMESTAMP, END_TIMESTAMP, TYPES_CNT, EVERY_DAY, \
-    EVERY_DAY_TIMESTAMP, EVERY_DAY_DETAIL, MAX_MSG_DATE , MAX_MSG_VOL, WEEK_DAY_CNT, EMOJI_PACKS = load_data(ADDRESS)
+    EVERY_DAY_TIMESTAMP, EVERY_DAY_DETAIL, MAX_MSG_DATE , MAX_MSG_VOL, WEEK_DAY_CNT, EMOJI_PACKS, \
+        HOURS_MSGS, WEEKDAY_MSGS = load_data(ADDRESS)
 
 
 def TYPES_CNT_process():
@@ -411,11 +417,10 @@ def show_rolling_window():
             xaxis_opts=opts.AxisOpts(type_="category", boundary_gap=False),
             legend_opts = opts.LegendOpts( selected_mode="multiple",pos_left=100,pos_top=80),
             # = opts.AnimationOpts(animation_duration = 2000)
-
-        )
-        
-        
+        )  
     )
+
+
     st_pyecharts(a, height="450px")
 show_rolling_window()
 
@@ -442,7 +447,7 @@ def show_heat_graph():
         .add_xaxis([str(i) for i in range(24)])
         .add_yaxis(
             "",
-            ["周一","周二","周三","周四","周五","周六","周七"],
+            ["周一","周二","周三","周四","周五","周六","周日"],
             WEEK_DAY_CNT,
             label_opts=opts.LabelOpts(is_show=True, position="inside"),
         )
@@ -454,9 +459,32 @@ def show_heat_graph():
                     pos_left="center", type_="color", range_opacity=0.9, precision = 0, dimension=2),
         )
     )
+    bar_ = (
+        Bar(init_opts=opts.InitOpts(height="600px"))
+        .add_xaxis(["周一","周二","周三","周四","周五","周六","周日"])
+        .add_yaxis("消息数量", WEEKDAY_MSGS, color = "#5793f3")
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="星期分布"),
+            # brush_opts=opts.BrushOpts(),
+        )
+    )
+    bar2 = (
+        Bar(init_opts=opts.InitOpts(height="600px"))
+        .add_xaxis(["{}时".format(i) for i in range(24)])
+        .add_yaxis("消息数量", HOURS_MSGS,color = "#d14a61",\
+            markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")] , label_opts=opts.LabelOpts(is_show=False)))
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="时间分布", pos_bottom="50%"),
+            brush_opts=opts.BrushOpts(),
+        )
+    )
+
+    grid = Grid(init_opts=opts.InitOpts(width = "700px", height = "1200px"))
+    grid.add(bar_, grid_opts=opts.GridOpts(pos_bottom="55%"))
+    grid.add(bar2, grid_opts=opts.GridOpts(pos_top="55%"))
 
     st_pyecharts(c)
-
+    st_pyecharts(grid, height = "550px")
     
 show_heat_graph()
 # slt.write(EMOJI_PACKS)
