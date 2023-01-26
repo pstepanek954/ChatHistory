@@ -465,7 +465,7 @@ def show_heat_graph():
         .add_yaxis("消息数量", WEEKDAY_MSGS, color = "#5793f3")
         .set_global_opts(
             title_opts=opts.TitleOpts(title="星期分布"),
-            # brush_opts=opts.BrushOpts(),
+            
         )
     )
     bar2 = (
