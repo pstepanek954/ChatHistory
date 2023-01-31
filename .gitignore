@@ -10,8 +10,6 @@ __pycache__/
 .Python
 .DS_Store
 .streamlit/
-chathistory.db
-chathistory.json
 build/
 develop-eggs/
 dist/
