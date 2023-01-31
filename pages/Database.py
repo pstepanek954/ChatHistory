@@ -24,3 +24,5 @@ rows = run_query("SELECT CreateTime, Message from chathistory where Des = 0;")
 # Print results.
 for row in rows[2:30]:
     st.write(f"{row[0]} said: {row[1]} ")
+
+st.write("Database  Test")
