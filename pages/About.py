@@ -18,10 +18,10 @@ import os
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-from statsmodels.tsa.stattools import adfuller as adf 
-from statsmodels.stats.diagnostic import acorr_ljungbox as lbtest
-from statsmodels.tsa.arima.model import ARIMA
+# from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+# from statsmodels.tsa.stattools import adfuller as adf 
+# from statsmodels.stats.diagnostic import acorr_ljungbox as lbtest
+# from statsmodels.tsa.arima.model import ARIMA
 
 
 
@@ -44,6 +44,19 @@ def get_local_time_ymd(timeStamp):
     otherStyleTime = time.strftime("%Y-%m-%d", t.timetuple() )
     return otherStyleTime
 
+def get_local_timestamp(date_time):
+    """ 返回本地时间的时间戳格式
+
+    Args:
+        date_time (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    timeArray = datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
+    return int(time.mktime(timeArray.timetuple()))
+
+
 
 slt.header("这里是！🤔笑笑的表情包研究所！")
 
@@ -56,8 +69,10 @@ def return_zero():
 
 
 EMOJI_TYPES = defaultdict(return_zero)
+EMOJI_INCREMENT = defaultdict(return_zero)
 EVERY_DAY = slt.session_state.every_day
 EVERY_DAY_DETAIL = slt.session_state.every_day_detail
+# NEWLY_ADD_EMOJI_TYPES = [0 for _ in range(len(EVERY_DAY) )]
 
 
 # print(EVERY_DAY_DETAIL)
@@ -67,8 +82,7 @@ def EMOJI_ANALYSIS():
     idxx = 0
     idxx_2 = 0
     quantity_idx_2 = 0
-    quantity_idx_1 = 0
-    quantity_idx_3 = 0
+    
     for i in EV_DAY_EMOJIS:
         if "productid=\"com.tencent.xin.emoticon.person.stike" in i["Message"]:
             idxx += 1
@@ -108,11 +122,20 @@ def get_daily_emoji():
 
     for i in EVERY_DAY:
         emoji_cnts[i] = 0
-        
+    
+    emoji_appeared = set() # 日期指针
+
+    
     for i in EV_DAY_EMOJIS:
         cur_day = get_local_time_ymd(i["CreateTime"])[:10]
         cur_emoji = i["Message"]
-        EMOJI_TYPES[re.findall('md5=\"(.*?)"', cur_emoji)[0]] += 1    
+
+        
+        emoji_name = re.findall('md5=\"(.*?)"', cur_emoji)[0] 
+        if emoji_name not in emoji_appeared:
+            emoji_appeared.add(emoji_name)
+            EMOJI_INCREMENT[cur_day] += 1
+        EMOJI_TYPES[emoji_name] += 1    
         emoji_cnts[cur_day] += 1
     
     input_df = pd.DataFrame({"Time" : EVERY_DAY, "EMOJIS": [emoji_cnts[i] for i in EVERY_DAY]})
@@ -270,7 +293,17 @@ def emoji_type_analysis():
     slt.markdown("使用次数最多的表情包\" 嗷呜 \" ，在上一次的统计中出现次数也是最多的（270次），但是这次和第二位（263）的距离缩小了很多。")
     slt.markdown("很有趣的一个细节是，前10个常用表情里，有4个都是\"嘿嘿\"。这个语气词一定是我们最经常想要借助表情包表达的～")
     
-    
+    bar3 = (
+        Bar(init_opts=opts.InitOpts())
+        .add_xaxis(xaxis_data=list(EVERY_DAY))
+        .add_yaxis(
+            series_name="Emoji数量", y_axis=[EMOJI_INCREMENT[i] for i in EVERY_DAY], category_gap=0,
+        )
+        .set_series_opts(
+            label_opts=opts.LabelOpts(is_show=False),
+        )
+    )
+    st_pyecharts(bar3)
         # a += emoji_type[i][1]
     # print(a)
     # slt.write(emoji_type[0])
@@ -280,6 +313,7 @@ def emoji_type_analysis():
     # pass
 
 emoji_type_analysis()
+
 # def TimeSeries_analysis():
 #     temp_ipt = INPUT_DF
 #     temp_ipt.index = [(i+ 1) for i in range(len(EVERY_DAY))]

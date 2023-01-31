@@ -283,9 +283,6 @@ def show_sidebar():
     else:
         pass
 show_sidebar()
-# slt.write(EVERY_DAY_DETAIL[str(d)])
-
-
 
 def show_types_cnt():
     TYPES_CNT_dataframe = TYPES_CNT_process()
