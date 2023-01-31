@@ -63,7 +63,9 @@ def get_local_timestamp(date_time):
     return int(time.mktime(timeArray.timetuple()))
 
 
-@slt.experimental_memo # experimental_memo 这个处理缓存效果比cache要好得多
+# @slt.experimental_memo # experimental_memo 这个处理缓存效果比cache要好得多
+# @slt.experimental_singleton
+@slt.experimental_memo
 def load_data(address):
     temp = ""
     max_msg_vol = 0
