@@ -10,8 +10,7 @@ from pyecharts.charts import Line, HeatMap, Grid, Bar
 import random
 from streamlit_echarts import st_pyecharts
 import os
-
-
+import sqlite3
 
 os.environ['TZ'] = 'Asia/Shanghai'
 
@@ -21,8 +20,6 @@ slt.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",  
 )
-
-
 
 if 'first_visit' not in slt.session_state:
     slt.session_state.first_visit=True
@@ -65,6 +62,7 @@ def get_local_timestamp(date_time):
 
 # @slt.experimental_memo # experimental_memo 这个处理缓存效果比cache要好得多
 # @slt.experimental_singleton
+# 
 @slt.experimental_memo
 def load_data(address):
     temp = ""
@@ -72,17 +70,19 @@ def load_data(address):
     max_msg_date = 0
     hours_msgs = [0 for _ in range(24)] # 16w消息分布在哪些小时中
     weekday_msgs = [0 for _ in range(7)] # 16w消息分布在星期几
-    
-    
-
-    with open(address, "r", encoding = "utf8")  as f:
-        temp = json.load(f) # 加载数据
 
     messenger = defaultdict(def_value) # 消息总数
     types = defaultdict(def_value_list) # 消息的种类：按照分类进行排布
     
-    left = temp[0]["CreateTime"] # 开始时间（精确到秒）
-    right = temp[-1]["CreateTime"] # 结束时间(精确到秒)
+    CONN = sqlite3.connect('./chathistory.db')
+    cursor = CONN.cursor()
+    execute_sentence = "select createTime, Des, Message, Type from chathistory"
+    temp =  cursor.execute(execute_sentence).fetchall()
+    cursor.close()
+    CONN.close()
+
+    left = temp[0][0] # 开始时间（精确到秒）
+    right = temp[-1][0] # 结束时间(精确到秒)
 
     left_day_ymd = get_local_time_ymd(left)[:10] # 获取第一天的 "%y-%m-%d" string，结果是YYYY-MM-DD
     right_day_ymd = get_local_time_ymd(right)[:10] # 获取最后一天的 "%y-%m-%d" string
@@ -91,6 +91,7 @@ def load_data(address):
 
     every_day_timestamp = [get_local_timestamp(str(i)) for i in every_day] # 每一天的timestamp(Integer)格式
     # 调整every_day格式，保留ymd
+
     for i in range(len(every_day)):
         every_day[i] = str(every_day[i])[:10]
 
@@ -103,57 +104,47 @@ def load_data(address):
 
     week_day_cnt = [[i, j , 0] for i in range(24) for j in range(7) ] # 统计消息的数量
 
-
     emoji_packs = []
 
-    # for i in every_day:
-    #     emoji_packs[i] = []
-
     for idx, i in enumerate(temp): # 统计消息数量
-        messenger[i["Des"]] += 1
-        types[i["Type"]][i["Des"]] += 1
-        if start_idx + 1 < len(every_day_timestamp) and i["CreateTime"] < every_day_timestamp[start_idx + 1]:
-            every_day_detail[every_day[start_idx]][i["Type"]][i["Des"]] += 1
-        elif start_idx + 1 < len(every_day_timestamp) and i["CreateTime"] >= every_day_timestamp[start_idx + 1]:
+        messenger[i[1]] += 1
+        types[i[3]][i[1]] += 1
+        if start_idx + 1 < len(every_day_timestamp) and i[0] < every_day_timestamp[start_idx + 1]:
+            every_day_detail[every_day[start_idx]][i[3]][i[1]] += 1
+        elif start_idx + 1 < len(every_day_timestamp) and i[0] >= every_day_timestamp[start_idx + 1]:
             if max_msg_vol < (idx - tmp_idx):
                 max_msg_date = every_day[start_idx]
                 max_msg_vol = idx - tmp_idx
             tmp_idx = idx
             start_idx += 1
             every_day_detail[every_day[start_idx]] = defaultdict(def_value_list)
-            every_day_detail[every_day[start_idx]][i["Type"]][i["Des"]] += 1
+            every_day_detail[every_day[start_idx]][i[3]][i[1]] += 1
         else:
             if len(temp) - idx > max_msg_vol:
                 max_msg_vol = len(temp) - idx
                 max_msg_date = every_day[-1]
-            tail[i["Type"]][i["Des"]] += 1
+            tail[i[3]][i[1]] += 1
 
-        if i["Type"] == 47:
+        if i[3] == 47:
             emoji_packs.append(i)
-            # emoji_packs[every_day[start_idx]][i["Des"]] += 1
-            
         
-        tmp_wk_detail = datetime.datetime.fromtimestamp(i["CreateTime"])
+        tmp_wk_detail = datetime.datetime.fromtimestamp(i[0])
         wk_day = tmp_wk_detail.weekday()
         wk_hour = int(tmp_wk_detail.hour)
         week_day_cnt[wk_hour * 7 + wk_day][2] += 1
         hours_msgs[wk_hour] += 1 
         weekday_msgs[wk_day] += 1
 
-
-
+# "select createTime, Des, Message, Type from chathistory"
     every_day_detail[every_day[-1]] = tail
 
     return temp, messenger, left, right, types, every_day, every_day_timestamp, \
         every_day_detail, max_msg_date, max_msg_vol, week_day_cnt, emoji_packs, hours_msgs, weekday_msgs
 
-
-
 def def_value():
     return 0
 def def_value_list():
     return [0, 0]
-
 
 ADDRESS = "./chathistory.json"
 CHAT_HISTORY, TOTAL_CNT, START_TIMESTAMP, END_TIMESTAMP, TYPES_CNT, EVERY_DAY, \
@@ -195,12 +186,11 @@ slt.session_state.load_data = CHAT_HISTORY
 slt.session_state.emoji_packs = EMOJI_PACKS
 slt.session_state.every_day = EVERY_DAY
 slt.session_state.every_day_detail = EVERY_DAY_DETAIL
-# 
+
 # 利用页面缓存减少冲突
 
 slt.markdown("# 奇奇怪怪的聊天站")
 slt.caption("🧐 什么聊天站！进来看看！")
-
 
 
 def get_msg_vol(timestamp1, timestamp2):
@@ -210,7 +200,7 @@ def get_msg_vol(timestamp1, timestamp2):
     indx2 = -1
     while start <= end:
         mid = start + ((end - start) >> 1)
-        if CHAT_HISTORY[mid]['CreateTime'] > timestamp1:
+        if CHAT_HISTORY[mid][0] > timestamp1:
             indx1 = mid
             end = mid - 1
         else:
@@ -219,7 +209,7 @@ def get_msg_vol(timestamp1, timestamp2):
     end = TOTAL_MSG - 1
     while start <= end:
         mid = start + ((end - start) >> 1)
-        if CHAT_HISTORY[mid]['CreateTime'] > timestamp2:
+        if CHAT_HISTORY[mid][0] > timestamp2:
             indx2 = mid
             end = mid - 1
         else:
@@ -245,7 +235,6 @@ def get_local_time(timeStamp):
     otherStyleTime = time.strftime("%Y-%m-%d %H:%M:%S", t.timetuple())
     return otherStyleTime
 
-
 def show_profile():
     days = get_interval_time(START_TIMESTAMP, END_TIMESTAMP)
     slt.write("总共有", str(TOTAL_MSG) ,"条消息, 最早的消息来自瑜瑜子，发送时间是", \
@@ -256,7 +245,6 @@ def show_profile():
         这意味着那24个小时里，我们每隔1分钟就发1条消息，整天不休。" )
     slt.write("2022-08-02 这个日子也比较独特。瑜瑜和笑笑\
         怒刷了1428条微信记录，那天打开了话匣子的瑜瑜发送了626条消息。炎炎夏日挡不住恋人的絮絮叨叨💑。")
-
 
 show_profile()
 
@@ -279,8 +267,8 @@ def show_sidebar():
             chose_ = random.randint(0, TOTAL_MSG)
             print(chose_)
         slt.sidebar.json(CHAT_HISTORY[chose_])
-        slt.sidebar.write("🤖🤖️ (你的自动服务机器人笨笨熊🐻): 这条消息在 {} 发出，是 {} 发的！—— 播报完毕！(bibi~) ".format(get_local_time(CHAT_HISTORY[chose_]["CreateTime"]),\
-            "瑜瑜" if CHAT_HISTORY[chose_]["Des"] == 1 else "笑笑"))
+        slt.sidebar.write("🤖🤖️ (你的自动服务机器人笨笨熊🐻): 这条消息在 {} 发出，是 {} 发的！—— 播报完毕！(bibi~) ".format(get_local_time(CHAT_HISTORY[chose_][0]),\
+            "瑜瑜" if CHAT_HISTORY[chose_][1] == 1 else "笑笑"))
         slt.sidebar.markdown("-----")
     else:
         pass
@@ -373,21 +361,18 @@ def show_rolling_window():
     temp_pd = pd.DataFrame({"She": MACRO_DATA[2], "Time": EVERY_DAY })
     temp_pd.set_index = "Time"
     temp_pd['She'] = temp_pd['She'].rolling(10).mean()
-    
-
     a = (
         Line(init_opts=opts.InitOpts(animation_opts=opts.AnimationOpts(
                 animation_duration=2000, animation_easing="elasticOut"
             )))
         .add_xaxis(EVERY_DAY)
-        .add_yaxis("天瑜的!",
+        .add_yaxis("10天的滑动平均!",
                 temp_pd["She"], 
                 is_smooth=True, 
                 symbol = None,
                 markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="max")]),
                 markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")], label_opts=opts.LabelOpts(is_show=False)),
-                areastyle_opts=opts.AreaStyleOpts(opacity=0.2, color="rgba(245,212,217,0.15)"),
-                
+                areastyle_opts=opts.AreaStyleOpts(opacity=0.2, color="rgba(245,212,217,0.15)"),     
         )
         .set_series_opts(
             markarea_opts=opts.MarkAreaOpts(
@@ -403,7 +388,6 @@ def show_rolling_window():
                                     ,itemstyle_opts = opts.ItemStyleOpts(color = 'rgba(241,158,194,0.25)')),
                     opts.MarkAreaItem(name="上学🎒", x=("2022-08-17", "2022-10-04")
                                     ,itemstyle_opts = opts.ItemStyleOpts(color = 'rgba(245,212,217,0.15)')),
-                    
                 ]
             ),
         )

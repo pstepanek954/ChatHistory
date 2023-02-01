@@ -56,17 +56,14 @@ def get_local_timestamp(date_time):
     timeArray = datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
     return int(time.mktime(timeArray.timetuple()))
 
-
-
 slt.header("这里是！🤔笑笑的表情包研究所！")
 
-
 EV_DAY_EMOJIS = slt.session_state.emoji_packs
-#  = slt.session_state.every_day
-slt.write(EV_DAY_EMOJIS[3])
+# slt.write(EV_DAY_EMOJIS[3])
+# "select createTime, Des, Message, Type from chathistory"
+
 def return_zero():
     return 0
-
 
 EMOJI_TYPES = defaultdict(return_zero)
 EMOJI_INCREMENT = defaultdict(return_zero)
@@ -84,17 +81,17 @@ def EMOJI_ANALYSIS():
     quantity_idx_2 = 0
     
     for i in EV_DAY_EMOJIS:
-        if "productid=\"com.tencent.xin.emoticon.person.stike" in i["Message"]:
+        if "productid=\"com.tencent.xin.emoticon.person.stike" in i[2]:
             idxx += 1
-        if "thumburl = \"http://mmbiz.qpic.cn/" in i["Message"]:
+        if "thumburl = \"http://mmbiz.qpic.cn/" in i[2]:
             idxx_2 += 1
-        if "type=\"2\"" in i["Message"]:
+        if "type=\"2\"" in i[2]:
             quantity_idx_2 += 1
         # elif "type=\"1\"" in i["Message"]:
         #     quantity_idx_1 += 1
         # elif "type=\"3\"" in i["Message"]:
         #     quantity_idx_3 += 1
-        if "<gameext type=\"2\"" in i["Message"] and "type=\"2\"" not in i["Message"]:
+        if "<gameext type=\"2\"" in i[2] and "type=\"2\"" not in i[2]:
             quantity_idx_2 -= 1
         # if "<gameext type=\"1\"" in i["Message"] and "type=\"1\"" not in i["Message"]:
         #     quantity_idx_1 -= 1
@@ -127,8 +124,8 @@ def get_daily_emoji():
 
     
     for i in EV_DAY_EMOJIS:
-        cur_day = get_local_time_ymd(i["CreateTime"])[:10]
-        cur_emoji = i["Message"]
+        cur_day = get_local_time_ymd(i[0])[:10]
+        cur_emoji = i[2]
 
         
         emoji_name = re.findall('md5=\"(.*?)"', cur_emoji)[0] 
@@ -304,14 +301,7 @@ def emoji_type_analysis():
         )
     )
     st_pyecharts(bar3)
-        # a += emoji_type[i][1]
-    # print(a)
-    # slt.write(emoji_type[0])
-    # slt.write(emoji_type[1])
-    # slt.write(emoji_type[2])
-    # slt.write(emoji_type[3])
-    # pass
-
+       
 emoji_type_analysis()
 
 # def TimeSeries_analysis():
