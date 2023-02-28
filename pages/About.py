@@ -4,26 +4,21 @@ import datetime
 import time
 import re
 from PIL import Image
-from collections import defaultdict
-
+from collections import defaultdict, Counter
 import pyecharts.options as opts
 from pyecharts.charts import Line, HeatMap, Grid, Bar
-
 import base64
-
 import random
 from streamlit_echarts import st_pyecharts
 import os
-
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+
 # from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 # from statsmodels.tsa.stattools import adfuller as adf 
 # from statsmodels.stats.diagnostic import acorr_ljungbox as lbtest
 # from statsmodels.tsa.arima.model import ARIMA
-
-
 
 os.environ['TZ'] = 'Asia/Shanghai'
 
@@ -59,8 +54,6 @@ def get_local_timestamp(date_time):
 slt.header("这里是！🤔笑笑的表情包研究所！")
 
 EV_DAY_EMOJIS = slt.session_state.emoji_packs
-# slt.write(EV_DAY_EMOJIS[3])
-# "select createTime, Des, Message, Type from chathistory"
 
 def return_zero():
     return 0
@@ -69,20 +62,21 @@ EMOJI_TYPES = defaultdict(return_zero)
 EMOJI_INCREMENT = defaultdict(return_zero)
 EVERY_DAY = slt.session_state.every_day
 EVERY_DAY_DETAIL = slt.session_state.every_day_detail
-# NEWLY_ADD_EMOJI_TYPES = [0 for _ in range(len(EVERY_DAY) )]
-
-
-# print(EVERY_DAY_DETAIL)
 
 def EMOJI_ANALYSIS():
     
     idxx = 0
     idxx_2 = 0
     quantity_idx_2 = 0
-    
+
+    emoticon_creaters = Counter()
+
     for i in EV_DAY_EMOJIS:
         if "productid=\"com.tencent.xin.emoticon.person.stike" in i[2]:
             idxx += 1
+            location = i[2].find('productid=\"com.tencent.xin.emoticon.person.stiker')
+            emoticon_creaters[i[2][location + 50:location+76]] += 1
+            
         if "thumburl = \"http://mmbiz.qpic.cn/" in i[2]:
             idxx_2 += 1
         if "type=\"2\"" in i[2]:
@@ -104,8 +98,8 @@ def EMOJI_ANALYSIS():
     # slt.markdown("> 🧐 看来咱们还是喜欢乱动的可爱小玩意儿")
     slt.write("下面这张图把这些消息拉长到整个", str(len(EVERY_DAY)), "天的时间维度上，看看我们对表情包的喜好如何——")
     slt.markdown("- 和最开始一样，笑笑对数据做了一个滑动平均，每一天的实际表情包发送量取了过去10天之期望，这样把整体趋势更好滴表现出来～")
-
-
+    slt.write('most common creaters: ', emoticon_creaters.most_common(10))
+    slt.write("BongBong 兔！（按摩）/ 动起来的BongBong兔（）/小八狗）")
 def get_daily_emoji():
     EMOJI_ANALYSIS()
     emoji_cnts = dict()
@@ -121,7 +115,6 @@ def get_daily_emoji():
         emoji_cnts[i] = 0
     
     emoji_appeared = set() # 日期指针
-
     
     for i in EV_DAY_EMOJIS:
         cur_day = get_local_time_ymd(i[0])[:10]

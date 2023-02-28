@@ -74,7 +74,7 @@ def load_data(address):
     messenger = defaultdict(def_value) # 消息总数
     types = defaultdict(def_value_list) # 消息的种类：按照分类进行排布
     
-    CONN = sqlite3.connect('./chathistory.db')
+    CONN = sqlite3.connect('./static/files/chathistory.db')
     cursor = CONN.cursor()
     execute_sentence = "select createTime, Des, Message, Type from chathistory"
     temp =  cursor.execute(execute_sentence).fetchall()
@@ -150,7 +150,6 @@ ADDRESS = "./chathistory.json"
 CHAT_HISTORY, TOTAL_CNT, START_TIMESTAMP, END_TIMESTAMP, TYPES_CNT, EVERY_DAY, \
     EVERY_DAY_TIMESTAMP, EVERY_DAY_DETAIL, MAX_MSG_DATE , MAX_MSG_VOL, WEEK_DAY_CNT, EMOJI_PACKS, \
         HOURS_MSGS, WEEKDAY_MSGS = load_data(ADDRESS)
-
 
 def TYPES_CNT_process():
 
@@ -261,17 +260,7 @@ def show_sidebar():
         ；\n \n 笑笑发了{}条文字，甩了{}个表情包".format(str(EVERY_DAY_DETAIL[str(d)][1][1]), EVERY_DAY_DETAIL[str(d)][47][1], EVERY_DAY_DETAIL[str(d)][1][0], EVERY_DAY_DETAIL[str(d)][47][0]))
     slt.sidebar.markdown("------")
 
-    if slt.sidebar.button("点点看！😘（也可以一直点！）"):
-        chose_ = random.randint(0, TOTAL_MSG)
-        while CHAT_HISTORY[chose_]["Type"] != 1:
-            chose_ = random.randint(0, TOTAL_MSG)
-            print(chose_)
-        slt.sidebar.json(CHAT_HISTORY[chose_])
-        slt.sidebar.write("🤖🤖️ (你的自动服务机器人笨笨熊🐻): 这条消息在 {} 发出，是 {} 发的！—— 播报完毕！(bibi~) ".format(get_local_time(CHAT_HISTORY[chose_][0]),\
-            "瑜瑜" if CHAT_HISTORY[chose_][1] == 1 else "笑笑"))
-        slt.sidebar.markdown("-----")
-    else:
-        pass
+   
 show_sidebar()
 
 def show_types_cnt():
