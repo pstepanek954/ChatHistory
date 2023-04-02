@@ -14,12 +14,7 @@ import sqlite3
 
 os.environ['TZ'] = 'Asia/Shanghai'
 
-slt.set_page_config(
-    page_title="奇奇怪怪的发电中心站",
-    page_icon="🦈",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+
 
 if 'first_visit' not in slt.session_state:
     slt.session_state.first_visit = True

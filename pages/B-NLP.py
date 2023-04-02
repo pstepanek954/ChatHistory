@@ -280,7 +280,7 @@ CONN.close()
 # for row in rows[2:30]:
 #     st.write(f"{row[0]} said: {row[1]} ")
 
-st.write("Database  Test")
+# st.write("Database  Test")
 
 
 # 初代：
